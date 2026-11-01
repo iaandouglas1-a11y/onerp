@@ -23,6 +23,6 @@ export async function ModalMovimento({novo,editar,clienteSelecionado,fecharEm,mo
   if(movimento&&modo==='mei'&&movimento.tipo_movimento!=='RECEITA')return null;
   if(clientesPermitidos.length===0)return <JanelaModal titulo="Novo lançamento fiscal" fecharEm={fecharEm}><p className="muted pequeno">Cadastre primeiro um cliente compatível com esta modalidade de faturamento.</p></JanelaModal>;
   return <JanelaModal titulo={movimento?'Editar lançamento':'Novo lançamento fiscal'} descricao="Dados do movimento e competência" fecharEm={fecharEm} largura="ampla">
-    <FormularioMovimento clientes={clientesPermitidos} categorias={resultadoCategorias.data??[]} movimento={movimento} clienteSelecionado={clienteSelecionado} modo={modo}/>
+    <FormularioMovimento key={movimento?.id??'novo'} clientes={clientesPermitidos} categorias={resultadoCategorias.data??[]} movimento={movimento} clienteSelecionado={clienteSelecionado} modo={modo} rotaNovo={`${fecharEm}${fecharEm.includes('?')?'&':'?'}novo=1`}/>
   </JanelaModal>;
 }

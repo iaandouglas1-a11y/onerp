@@ -40,14 +40,12 @@ export async function salvarMovimentoFiscal(dados:FormData) {
     conferirErro(erro,'Incluir movimento');
   }
   revalidatePath('/fiscal/faturamento');revalidatePath('/fiscal/faturamento/mei');revalidatePath('/fiscal/faturamento/convencional');
-  redirect(cliente.regime_tributario === 'MEI'
-    ? `/fiscal/faturamento/mei?cliente=${clienteId}&competencia=${movimento.competencia.slice(0, 7)}`
-    : `/fiscal/faturamento/convencional?competencia=${movimento.competencia.slice(0, 7)}`);
+  return {sucesso:true,mensagem:id?'Lançamento atualizado.':'Lançamento cadastrado. Você pode incluir outro.',id:id||null};
 }
 export async function criarCategoriaFiscal(dados:FormData) {
   const {banco,escritorioId}=await exigirEdicao();const tipo=ler(dados,'tipo_movimento');if(!['RECEITA','ENTRADA','DESPESA'].includes(tipo))throw new Error('Tipo inválido.');
   const {error:erro}=await banco.from('categorias_fiscais').insert({escritorio_id:escritorioId,nome:textoObrigatorio(dados.get('nome'),'Nome'),tipo_movimento:tipo});
-  conferirErro(erro);revalidatePath('/fiscal/categorias');redirect('/fiscal/categorias');
+  conferirErro(erro);revalidatePath('/fiscal/categorias');return {sucesso:true,mensagem:'Categoria cadastrada. Você pode incluir outra.'};
 }
 export async function configurarLimiteMei(dados:FormData) {
   const {banco,escritorioId,usuario}=await exigirEdicao();
@@ -59,7 +57,7 @@ export async function configurarLimiteMei(dados:FormData) {
   const fundamento=textoObrigatorio(dados.get('fundamento_legal'),'Fundamento legal');
   const {error:erro}=await banco.from('regras_limites_mei').upsert({escritorio_id:escritorioId,ano_calendario:ano,limite_anual:limite,proporcional_ano_abertura:dados.get('proporcional_ano_abertura')==='on',percentual_alerta:percentual,
     fundamento_legal:fundamento,aprovado_por:usuario.id,aprovado_em:new Date().toISOString()},{onConflict:'escritorio_id,ano_calendario'});
-  conferirErro(erro,'Configurar regra MEI');revalidatePath('/fiscal/faturamento/mei');redirect('/configuracoes');
+  conferirErro(erro,'Configurar regra MEI');revalidatePath('/fiscal/faturamento/mei');revalidatePath('/configuracoes');return {sucesso:true,mensagem:'Regra MEI registrada e aprovada.'};
 }
 export async function registrarAjusteMei(dados:FormData) {
   const {banco,escritorioId,usuario}=await exigirEdicao();
@@ -70,7 +68,7 @@ export async function registrarAjusteMei(dados:FormData) {
   const valor=valorMonetarioBr(ler(dados,'valor'));
   if(valor===0)throw new Error('Informe valor diferente de zero.');
   const {error:erro}=await banco.from('ajustes_faturamento_mei').insert({escritorio_id:escritorioId,cliente_id:clienteId,competencia:`${competencia}-01`,valor,justificativa:textoObrigatorio(dados.get('justificativa'),'Justificativa'),criado_por:usuario.id});
-  conferirErro(erro);revalidatePath('/fiscal/faturamento/mei');redirect(`/fiscal/faturamento/mei?cliente=${clienteId}`);
+  conferirErro(erro);revalidatePath('/fiscal/faturamento/mei');return {sucesso:true,mensagem:'Ajuste registrado. Você pode incluir outro.'};
 }
 
 export async function excluirMovimentoFiscal(dados:FormData){

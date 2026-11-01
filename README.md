@@ -1,10 +1,10 @@
-# On ERP — v0.4.0 (Societário e Fiscal)
+# On ERP — v0.5.0 (Societário e Fiscal)
 
 Sistema interno da **On Contabilidade**, com foco em desktop e consultas responsivas. Identidade visual: `#0A111C`, `#7CB93C`, `#F4F6F8`, `#9AA5B4`.
 
 ## Funcionalidades neste pacote
 
-Esta versão consolida as melhorias de navegação e formulários da v0.2, a exportação PDF da v0.3 e a correção de compilação do gerador PDF da v0.3.1. Consulte `ATUALIZACAO_V0_2.md`, `ATUALIZACAO_V0_3.md` e `ATUALIZACAO_V0_3_1.md` para o histórico.
+Esta versão consolida a v0.4.1 e implementa a gestão anual de receitas e o cadastro sequencial sem fechar formulários (v0.5.0). Consulte `ATUALIZACAO_V0_2.md`, `ATUALIZACAO_V0_3.md` e `ATUALIZACAO_V0_3_1.md` para o histórico.
 
 - **Acesso** por e-mail/senha com Supabase Auth; criação inicial de escritório e vínculo automático do primeiro administrador pelo gatilho existente do banco.
 - **Dashboard** com dados reais dos clientes, tarefas, obrigações e receitas fiscais (não confunde receitas dos clientes com honorários do escritório).
@@ -12,6 +12,14 @@ Esta versão consolida as melhorias de navegação e formulários da v0.2, a exp
 - **Fiscal**: lançamentos de receitas, entradas e despesas, competência, categorias, consultas convencional e MEI, relatórios PDF, ajustes MEI e acompanhamento do limite parametrizado e aprovado.
 - **PWA**: manifesto, ícones e tela de indisponibilidade, sem cache offline de dados confidenciais.
 - **Não implementados**: cálculos de folha/contábil, emissão de guias, integrações governamentais, envio de cobranças e demais módulos futuros.
+
+## Novidade v0.5.0: gestão das receitas e formulários
+
+- **MEI:** a tabela operacional mostra todas as receitas do **ano**, com Editar e Excluir em cada linha, inclusive quando o mês selecionado não tem movimento. Os indicadores continuam mensais e anuais conforme rotulados.
+- **Convencional:** receitas, entradas e despesas podem ser gerenciadas em uma lista anual; indicadores continuam filtrados por competência.
+- **Cadastro contínuo:** os modais permanecem abertos e os campos variáveis são limpos após gravar com sucesso; o contexto do cliente e alguns padrões de preenchimento podem permanecer selecionados. Edição bem-sucedida abre um formulário de **nova inclusão**. Em caso de erro, os dados preenchidos são preservados.
+- O componente reutilizável `src/componentes/globais/formulario-continuo.tsx` é **padrão obrigatório** para formulários de novos módulos.
+- Consulte `ATUALIZACAO_V0_5_0.md` para causas, exceções e checklist de testes.
 
 ## Requisitos
 

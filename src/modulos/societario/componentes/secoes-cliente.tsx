@@ -7,6 +7,7 @@ import { BotaoDocumento,BotaoRevelar } from './acoes-arquivos';
 import { dataBrasileira } from '@/lib/utilitarios/formatacao';
 import { obterContexto } from '@/lib/seguranca/contexto';
 import { JanelaModal } from '@/componentes/globais/janela-modal';
+import { FormularioContinuo } from '@/componentes/globais/formulario-continuo';
 import { Plus, Pencil } from 'lucide-react';
 
 type CampoConfigurado={nome:string;rotulo:string;tipo?:string;opcoes?:{valor:string;rotulo:string}[];obrigatorio?:boolean};
@@ -37,7 +38,7 @@ export async function SecaoCliente({id,aba,editar}:{id:string;aba:string;editar?
     return <><Cartao titulo="Acessos cadastrados" acoes={<Link className="botao primario" href={abrirNovo}><Plus size={14}/>Novo acesso</Link>}>
       {credenciais.length===0?<ListaVazia/>:credenciais.map(item=><div className="item-lista" key={item.id}><div><div className="nome-item">{item.nome_portal}</div><div className="subitem">Usuário: {item.identificacao_usuario||'—'} · Validade: {dataBrasileira(item.data_validade)}</div></div><BotaoRevelar id={item.id} clienteId={id}/></div>)}
     </Cartao>
-    {editar==='novo'&&<JanelaModal titulo="Novo acesso" descricao="Dados protegidos do cliente" fecharEm={fecharEm}><form className="grade" action={criarCredencial}><input type="hidden" name="cliente_id" value={id}/><Campo nome="nome_portal" rotulo="Portal/Sistema" obrigatorio/><Campo nome="identificacao_usuario" rotulo="Identificação do usuário"/><div className="campo"><label htmlFor="segredo">Segredo / senha *</label><input id="segredo" type="password" name="segredo" required autoComplete="new-password"/></div><Campo nome="data_validade" rotulo="Validade" tipo="date"/><p className="muted pequeno">A senha é criptografada e não é exportada em relatórios.</p><button className="botao primario">Salvar no cofre</button></form></JanelaModal>}
+    {editar==='novo'&&<JanelaModal titulo="Novo acesso" descricao="Dados protegidos do cliente" fecharEm={fecharEm}><FormularioContinuo className="grade" acao={criarCredencial}><input type="hidden" name="cliente_id" value={id}/><Campo nome="nome_portal" rotulo="Portal/Sistema" obrigatorio/><Campo nome="identificacao_usuario" rotulo="Identificação do usuário"/><div className="campo"><label htmlFor="segredo">Segredo / senha *</label><input id="segredo" type="password" name="segredo" required autoComplete="new-password"/></div><Campo nome="data_validade" rotulo="Validade" tipo="date"/><p className="muted pequeno">A senha é criptografada e não é exportada em relatórios.</p><button className="botao primario">Salvar no cofre</button></FormularioContinuo></JanelaModal>}
     </>;
   }
   if(aba==='documentos'){
@@ -45,7 +46,7 @@ export async function SecaoCliente({id,aba,editar}:{id:string;aba:string;editar?
     return <><Cartao titulo="Documentos do cliente" acoes={edicaoPermitida?<Link className="botao primario" href={abrirNovo}><Plus size={14}/>Adicionar documento</Link>:null}>
       {arquivos.length===0?<ListaVazia/>:arquivos.map(item=><div className="item-lista" key={String(item.id)}><div><div className="nome-item">{String(item.titulo)}</div><div className="subitem">{String(item.categoria)} · Validade: {dataBrasileira(item.data_validade as string|null)}</div></div><BotaoDocumento id={String(item.id)}/></div>)}
     </Cartao>
-    {edicaoPermitida&&editar==='novo'&&<JanelaModal titulo="Adicionar documento" fecharEm={fecharEm}><form action={enviarDocumento} className="grade"><input type="hidden" name="cliente_id" value={id}/><Campo rotulo="Nome do documento" nome="titulo" obrigatorio/><Campo rotulo="Categoria" nome="categoria" padrao="CONTRATO"/><Campo rotulo="Validade" nome="data_validade" tipo="date"/><div className="campo"><label htmlFor="arquivo">Arquivo (PDF, imagem ou XML, até 10 MB)</label><input id="arquivo" type="file" name="arquivo" accept=".pdf,.jpg,.jpeg,.png,.xml,.txt" required/></div><button className="botao primario">Enviar documento</button></form></JanelaModal>}
+    {edicaoPermitida&&editar==='novo'&&<JanelaModal titulo="Adicionar documento" fecharEm={fecharEm}><FormularioContinuo acao={enviarDocumento} className="grade"><input type="hidden" name="cliente_id" value={id}/><Campo rotulo="Nome do documento" nome="titulo" obrigatorio/><Campo rotulo="Categoria" nome="categoria" padrao="CONTRATO"/><Campo rotulo="Validade" nome="data_validade" tipo="date"/><div className="campo"><label htmlFor="arquivo">Arquivo (PDF, imagem ou XML, até 10 MB)</label><input id="arquivo" type="file" name="arquivo" accept=".pdf,.jpg,.jpeg,.png,.xml,.txt" required/></div><button className="botao primario">Enviar documento</button></FormularioContinuo></JanelaModal>}
     </>;
   }
   const configuracao=configuracoes[aba];if(!configuracao)return null;
@@ -64,14 +65,14 @@ export async function SecaoCliente({id,aba,editar}:{id:string;aba:string;editar?
   </Cartao>
   {mostrarFormulario&&<JanelaModal titulo={registroAtual?'Editar registro':`Adicionar em ${configuracao.titulo}`} fecharEm={fecharEm} largura="ampla">
     {aba==='servicos'&&servicos.length===0&&<div className="aviso-configuracao">Cadastre primeiro um serviço no <Link href="/societario/servicos">catálogo de serviços</Link>.</div>}
-    <form action={salvarRegistroSocietario} className="grade-formulario"><input type="hidden" name="tipo" value={configuracao.tipo}/><input type="hidden" name="cliente_id" value={id}/><input type="hidden" name="registro_id" value={registroAtual?String(registroAtual.id):''}/>
+    <FormularioContinuo key={registroAtual?.id?String(registroAtual.id):'novo'} acao={salvarRegistroSocietario} className="grade-formulario" modo={registroAtual?'edicao':'cadastro'} rotaNovoAposEdicao={abrirNovo}><input type="hidden" name="tipo" value={configuracao.tipo}/><input type="hidden" name="cliente_id" value={id}/><input type="hidden" name="registro_id" value={registroAtual?String(registroAtual.id):''}/>
       {aba==='servicos'&&<Campo rotulo="Serviço" nome="servico_id" obrigatorio padrao={registroAtual?.servico_id?String(registroAtual.servico_id):''} opcoes={servicos.map(item=>({valor:item.id,rotulo:item.nome}))}/>}
       {configuracao.campos.map(campo=>campo.nome==='cpf_cnpj'
         ? <CampoDocumento key={campo.nome} nome={campo.nome} rotulo={campo.rotulo} padrao={String(registroAtual?.[campo.nome]??'')}/>
         : <Campo key={campo.nome} nome={campo.nome} rotulo={campo.rotulo} tipo={campo.tipo||'text'} obrigatorio={campo.obrigatorio} padrao={registroAtual?.[campo.nome]===null?'':String(registroAtual?.[campo.nome]??'')} opcoes={campo.opcoes}/>)}
       {(aba==='contatos'||aba==='enderecos')&&<label className="linha pequeno"><input type="checkbox" name="principal" defaultChecked={Boolean(registroAtual?.principal)}/>Principal</label>}
       <div className="largo linha"><button type="submit" className="botao primario">{registroAtual?'Salvar alterações':'Adicionar'}</button><Link href={fecharEm} className="botao">Cancelar</Link></div>
-    </form>
+    </FormularioContinuo>
   </JanelaModal>}
   </>;
 }

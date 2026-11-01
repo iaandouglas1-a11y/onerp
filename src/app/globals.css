@@ -35,3 +35,10 @@
 .acoes-registro form{margin:0}
 .acoes-registro button:disabled{opacity:.42;cursor:not-allowed}
 .tabela td:first-child,.tabela th:first-child{white-space:nowrap}
+
+/* v0.5 — formulários persistentes e gestão de lançamentos */
+.formulario-retorno{grid-column:1/-1;margin:7px 0 0}
+.acoes-registro .botao{flex:0 0 auto}
+#receitas-cadastradas{scroll-margin-top:28px}
+.tabela-gerenciamento th:first-child,.tabela-gerenciamento td:first-child{min-width:174px}
+@media(max-width:800px){.tabela-gerenciamento{min-width:790px}}

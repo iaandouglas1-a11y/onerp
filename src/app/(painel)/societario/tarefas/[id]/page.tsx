@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { CabecalhoPagina, Cartao, Campo, Etiqueta, ListaVazia } from '@/componentes/globais/elementos';
 import { JanelaModal } from '@/componentes/globais/janela-modal';
+import { FormularioContinuo } from '@/componentes/globais/formulario-continuo';
 import { exigirEscritorio } from '@/lib/seguranca/contexto';
 import { dataBrasileira } from '@/lib/utilitarios/formatacao';
 import { adicionarItemTarefa,alternarItemTarefa,comentarTarefa,atualizarSituacaoTarefa } from '@/modulos/societario/acoes';
@@ -22,8 +23,8 @@ export default async function DetalheTarefa({params,searchParams}:{params:Promis
     <Cartao titulo="Comentários" acoes={podeEditar?<Link className="botao primario" href={`${base}?comentario=1`}>Novo comentário</Link>:null}>
       {!comentarios?.length&&<ListaVazia/>}{comentarios?.map(item=><div className="item-lista" key={item.id}><div>{item.comentario}<p className="muted pequeno" style={{marginTop:5}}>{dataBrasileira(item.criado_em)}</p></div></div>)}
     </Cartao></div>
-    {podeEditar&&filtros.status==='1'&&<JanelaModal titulo="Atualizar situação da tarefa" fecharEm={base}><form className="grade" action={atualizarSituacaoTarefa}><input type="hidden" name="id" value={id}/><Campo rotulo="Situação" nome="situacao" padrao={tarefa.situacao} opcoes={['A_FAZER','EM_EXECUCAO','AGUARDANDO_CLIENTE','CONCLUIDA','CANCELADA'].map(valor=>({valor,rotulo:valor.replaceAll('_',' ')}))}/><button className="botao primario">Atualizar</button></form></JanelaModal>}
-    {podeEditar&&filtros.item==='1'&&<JanelaModal titulo="Adicionar item ao checklist" fecharEm={base}><form className="grade" action={adicionarItemTarefa}><input type="hidden" name="tarefa_id" value={id}/><Campo nome="descricao" rotulo="Descrição" obrigatorio/><button className="botao primario">Adicionar item</button></form></JanelaModal>}
-    {podeEditar&&filtros.comentario==='1'&&<JanelaModal titulo="Novo comentário" fecharEm={base}><form className="grade" action={comentarTarefa}><input type="hidden" name="tarefa_id" value={id}/><div className="campo"><label htmlFor="comentario">Comentário</label><textarea id="comentario" name="comentario" required/></div><button className="botao primario">Publicar comentário</button></form></JanelaModal>}
+    {podeEditar&&filtros.status==='1'&&<JanelaModal titulo="Atualizar situação da tarefa" fecharEm={base}><FormularioContinuo className="grade" acao={atualizarSituacaoTarefa} modo="acao"><input type="hidden" name="id" value={id}/><Campo rotulo="Situação" nome="situacao" padrao={tarefa.situacao} opcoes={['A_FAZER','EM_EXECUCAO','AGUARDANDO_CLIENTE','CONCLUIDA','CANCELADA'].map(valor=>({valor,rotulo:valor.replaceAll('_',' ')}))}/><button className="botao primario">Atualizar</button></FormularioContinuo></JanelaModal>}
+    {podeEditar&&filtros.item==='1'&&<JanelaModal titulo="Adicionar item ao checklist" fecharEm={base}><FormularioContinuo className="grade" acao={adicionarItemTarefa}><input type="hidden" name="tarefa_id" value={id}/><Campo nome="descricao" rotulo="Descrição" obrigatorio/><button className="botao primario">Adicionar item</button></FormularioContinuo></JanelaModal>}
+    {podeEditar&&filtros.comentario==='1'&&<JanelaModal titulo="Novo comentário" fecharEm={base}><FormularioContinuo className="grade" acao={comentarTarefa}><input type="hidden" name="tarefa_id" value={id}/><div className="campo"><label htmlFor="comentario">Comentário</label><textarea id="comentario" name="comentario" required/></div><button className="botao primario">Publicar comentário</button></FormularioContinuo></JanelaModal>}
   </>;
 }

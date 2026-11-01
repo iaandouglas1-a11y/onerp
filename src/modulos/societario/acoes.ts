@@ -36,10 +36,10 @@ export async function salvarCliente(dados:FormData) {
   const {banco,escritorioId}=await exigirEdicao();
   const valores=dadosCliente(dados);
   const identificador=ler(dados,'id');
-  if(identificador){const {error:erro}=await banco.from('clientes').update(valores).eq('id',identificador).eq('escritorio_id',escritorioId);conferirErro(erro,'Atualizar cliente');revalidatePath('/societario/clientes');redirect(destinoCliente(identificador));}
+  if(identificador){const {error:erro}=await banco.from('clientes').update(valores).eq('id',identificador).eq('escritorio_id',escritorioId);conferirErro(erro,'Atualizar cliente');revalidatePath('/societario/clientes');revalidatePath(destinoCliente(identificador));return {sucesso:true,mensagem:'Dados do cliente atualizados.',id:identificador};}
   const {data:registro,error:erro}=await banco.from('clientes').insert({...valores,escritorio_id:escritorioId}).select('id').single();
   conferirErro(erro,'Cadastrar cliente');
-  revalidatePath('/societario/clientes');redirect(destinoCliente(registro!.id,'implantacao'));
+  revalidatePath('/societario/clientes');return {sucesso:true,mensagem:'Cliente cadastrado. Você pode incluir outro.',id:registro!.id};
 }
 async function validarCliente(banco:Awaited<ReturnType<typeof exigirEdicao>>['banco'],escritorioId:string,clienteId:string) {
   const {data:cliente,error:erro}=await banco.from('clientes').select('id').eq('escritorio_id',escritorioId).eq('id',clienteId).maybeSingle();
@@ -76,13 +76,13 @@ export async function salvarRegistroSocietario(dados:FormData) {
     const {error:erro}=await banco.from(tabela).insert({...valores,escritorio_id:escritorioId,cliente_id:clienteId});
     conferirErro(erro,'Criar registro');
   }
-  revalidatePath(`/societario/clientes/${clienteId}`);revalidatePath('/societario/tarefas');redirect(destinoCliente(clienteId,aba));
+  revalidatePath(`/societario/clientes/${clienteId}`);revalidatePath('/societario/tarefas');revalidatePath('/societario/obrigacoes');return {sucesso:true,mensagem:registroId?'Registro atualizado.':'Registro cadastrado. Você pode incluir outro.'};
 }
 export async function atualizarSituacaoTarefa(dados:FormData) {
   const {banco,escritorioId}=await exigirEdicao();const id=textoObrigatorio(dados.get('id'),'Tarefa');const situacao=ler(dados,'situacao');
   if(!['A_FAZER','EM_EXECUCAO','AGUARDANDO_CLIENTE','CONCLUIDA','CANCELADA'].includes(situacao))throw new Error('Situação inválida.');
   const {error:erro}=await banco.from('tarefas').update({situacao,concluido_em:situacao==='CONCLUIDA'?new Date().toISOString():null}).eq('id',id).eq('escritorio_id',escritorioId);
-  conferirErro(erro);revalidatePath('/societario/tarefas');
+  conferirErro(erro);revalidatePath('/societario/tarefas');return {sucesso:true,mensagem:'Situação atualizada.'};
 }
 export async function atualizarSituacaoObrigacao(dados:FormData) {
   const {banco,escritorioId}=await exigirEdicao();const id=textoObrigatorio(dados.get('id'),'Obrigação');const situacao=ler(dados,'situacao');
@@ -100,14 +100,14 @@ export async function alternarItem(dados:FormData) {
 export async function criarServico(dados:FormData) {
   const {banco,escritorioId}=await exigirEdicao();
   const {error:erro}=await banco.from('servicos').insert({escritorio_id:escritorioId,codigo:textoObrigatorio(dados.get('codigo'),'Código').toUpperCase(),nome:textoObrigatorio(dados.get('nome'),'Nome'),descricao:vazioOuTexto(dados,'descricao')});
-  conferirErro(erro);revalidatePath('/societario/servicos');redirect('/societario/servicos');
+  conferirErro(erro);revalidatePath('/societario/servicos');return {sucesso:true,mensagem:'Serviço cadastrado. Você pode incluir outro.'};
 }
 export async function criarModeloObrigacao(dados:FormData) {
   const {banco,escritorioId}=await exigirEdicao();const recorrencia=ler(dados,'recorrencia');
   if(!['MONTHLY','QUARTERLY','YEARLY','ONCE'].includes(recorrencia))throw new Error('Recorrência inválida.');
   const dia=Number(ler(dados,'dia_vencimento')||0);
   const {error:erro}=await banco.from('modelos_obrigacoes').insert({escritorio_id:escritorioId,nome:textoObrigatorio(dados.get('nome'),'Nome'),modulo:ler(dados,'modulo')||'SOCIETARIO',recorrencia,dia_vencimento:dia||null,descricao:vazioOuTexto(dados,'descricao')});
-  conferirErro(erro);revalidatePath('/societario/obrigacoes');redirect('/societario/obrigacoes');
+  conferirErro(erro);revalidatePath('/societario/obrigacoes');return {sucesso:true,mensagem:'Modelo cadastrado. Você pode incluir outro.'};
 }
 export async function enviarDocumento(dados:FormData) {
   const {banco,escritorioId,usuario}=await exigirEdicao();
@@ -123,7 +123,7 @@ export async function enviarDocumento(dados:FormData) {
   const {error:erroRegistro}=await banco.from('documentos').insert({escritorio_id:escritorioId,cliente_id:clienteId,categoria:ler(dados,'categoria')||'GERAL',titulo:ler(dados,'titulo')||nome,
     repositorio_arquivos:'on-erp-private',caminho_arquivo:caminho,tipo_midia:arquivo.type,tamanho_arquivo_bytes:arquivo.size,data_validade:normalizarData(dados.get('data_validade')),enviado_por:usuario.id});
   if(erroRegistro){await banco.storage.from('on-erp-private').remove([caminho]);conferirErro(erroRegistro,'Registrar documento');}
-  revalidatePath(destinoCliente(clienteId));redirect(destinoCliente(clienteId,'documentos'));
+  revalidatePath(destinoCliente(clienteId));return {sucesso:true,mensagem:'Documento enviado. Você pode enviar outro.'};
 }
 export async function obterLinkDocumento(id:string) {
   const {banco,escritorioId}=await exigirEscritorio();
@@ -148,7 +148,7 @@ export async function criarCredencial(dados:FormData) {
   conferirErro(erro,'Salvar credencial');
   const {error:erroLog}=await administrador.from('historico_acessos_credenciais').insert({escritorio_id:escritorioId,credencial_id:registro!.id,usuario_id:usuario.id,acao:'CREATE'});
   conferirErro(erroLog,'Registrar auditoria do cofre');
-  revalidatePath(destinoCliente(clienteId));redirect(destinoCliente(clienteId,'acessos'));
+  revalidatePath(destinoCliente(clienteId));return {sucesso:true,mensagem:'Credencial salva. Você pode cadastrar outra.'};
 }
 export async function revelarCredencial(id:string,clienteId:string) {
   const {escritorioId,usuario,banco}=await exigirEdicao();await validarCliente(banco,escritorioId,clienteId);
@@ -163,7 +163,7 @@ export async function adicionarItemTarefa(dados:FormData) {
   const {banco,escritorioId}=await exigirEdicao();const tarefaId=textoObrigatorio(dados.get('tarefa_id'),'Tarefa');
   const {data:tarefa}=await banco.from('tarefas').select('id').eq('id',tarefaId).eq('escritorio_id',escritorioId).maybeSingle();if(!tarefa)throw new Error('Tarefa inválida.');
   const {error:erro}=await banco.from('itens_checklist_tarefas').insert({escritorio_id:escritorioId,tarefa_id:tarefaId,descricao:textoObrigatorio(dados.get('descricao'),'Item'),posicao:0});
-  conferirErro(erro);revalidatePath(`/societario/tarefas/${tarefaId}`);
+  conferirErro(erro);revalidatePath(`/societario/tarefas/${tarefaId}`);return {sucesso:true,mensagem:'Item do checklist incluído.'};
 }
 export async function alternarItemTarefa(dados:FormData) {
   const {banco,escritorioId}=await exigirEdicao();const id=textoObrigatorio(dados.get('id'),'Item');const tarefaId=textoObrigatorio(dados.get('tarefa_id'),'Tarefa');
@@ -176,7 +176,7 @@ export async function comentarTarefa(dados:FormData) {
   const {banco,escritorioId,usuario}=await exigirEdicao();const tarefaId=textoObrigatorio(dados.get('tarefa_id'),'Tarefa');
   const {data:tarefa}=await banco.from('tarefas').select('id').eq('id',tarefaId).eq('escritorio_id',escritorioId).maybeSingle();if(!tarefa)throw new Error('Tarefa não encontrada.');
   const {error:erro}=await banco.from('comentarios_tarefas').insert({escritorio_id:escritorioId,tarefa_id:tarefaId,comentario:textoObrigatorio(dados.get('comentario'),'Comentário',4000),autor_id:usuario.id});
-  conferirErro(erro);revalidatePath(`/societario/tarefas/${tarefaId}`);
+  conferirErro(erro);revalidatePath(`/societario/tarefas/${tarefaId}`);return {sucesso:true,mensagem:'Comentário registrado.'};
 }
 
 /** Inativar mantém lançamentos, histórico e documentos vinculados ao cliente. */
