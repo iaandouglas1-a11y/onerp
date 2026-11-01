@@ -1,3 +1,5 @@
+> **Versão 0.5.1:** correção do adaptador da ação de alteração de situação de tarefas. Veja [ATUALIZACAO_V0_5_1.md](ATUALIZACAO_V0_5_1.md).
+
 # On ERP — v0.5.0 (Societário e Fiscal)
 
 Sistema interno da **On Contabilidade**, com foco em desktop e consultas responsivas. Identidade visual: `#0A111C`, `#7CB93C`, `#F4F6F8`, `#9AA5B4`.

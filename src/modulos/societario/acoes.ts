@@ -84,6 +84,15 @@ export async function atualizarSituacaoTarefa(dados:FormData) {
   const {error:erro}=await banco.from('tarefas').update({situacao,concluido_em:situacao==='CONCLUIDA'?new Date().toISOString():null}).eq('id',id).eq('escritorio_id',escritorioId);
   conferirErro(erro);revalidatePath('/societario/tarefas');return {sucesso:true,mensagem:'Situação atualizada.'};
 }
+/**
+ * Adaptador para o atributo `action` de formulários HTML.
+ * O React/Next.js aceita somente Promise<void> nesse contexto.
+ * A versão que devolve mensagem permanece disponível ao FormularioContinuo.
+ */
+export async function atualizarSituacaoTarefaFormulario(dados: FormData): Promise<void> {
+  await atualizarSituacaoTarefa(dados);
+}
+
 export async function atualizarSituacaoObrigacao(dados:FormData) {
   const {banco,escritorioId}=await exigirEdicao();const id=textoObrigatorio(dados.get('id'),'Obrigação');const situacao=ler(dados,'situacao');
   if(!['PENDENTE','EM_ANDAMENTO','AGUARDANDO_CLIENTE','CONCLUIDA','CANCELADA'].includes(situacao))throw new Error('Situação inválida.');
