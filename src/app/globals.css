@@ -45,11 +45,15 @@
 
 
 /* v0.5.3 — largura ajustável do menu e competência em MM/AAAA */
-.lateral{position:sticky;isolation:isolate;overflow:hidden}
-.lateral>nav{flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#344259 transparent}
+.lateral{position:sticky;isolation:isolate}
 .redimensionador-lateral{position:absolute;z-index:12;top:0;right:0;bottom:0;width:10px;cursor:col-resize;touch-action:none;user-select:none;outline:none}
 .redimensionador-lateral::after{content:'';position:absolute;top:0;right:3px;bottom:0;width:2px;background:rgba(124,185,60,.38);opacity:0;transition:opacity .15s}
 .redimensionador-lateral:hover::after,.redimensionador-lateral:focus-visible::after,.redimensionador-lateral:active::after{opacity:1}
 .redimensionador-lateral:focus-visible{outline:2px solid var(--verde);outline-offset:-2px}
 .entrada-competencia{font-variant-numeric:tabular-nums;max-width:160px;letter-spacing:.015em}
 @media(max-width:800px){.redimensionador-lateral{display:none}}
+
+/* Caixa de seleção compacta: sem herdar as dimensões de campos de texto */
+.campo-checkbox{flex-direction:row;align-items:center;gap:10px;min-height:39px;cursor:pointer}
+.campo-checkbox input[type="checkbox"],.campo input[type="checkbox"]{width:18px;height:18px;min-height:18px;min-width:18px;flex:0 0 18px;margin:0;padding:0;accent-color:var(--verde);cursor:pointer}
+.campo-checkbox span{font-size:12px;color:#526174;font-weight:500}
