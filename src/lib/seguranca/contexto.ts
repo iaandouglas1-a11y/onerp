@@ -25,9 +25,9 @@ export async function exigirEscritorio() {
   if (!contexto.escritorioId) redirect('/configuracao-inicial');
   return { ...contexto, escritorioId: contexto.escritorioId };
 }
+/** Qualquer membro ativo do escritório pode executar rotinas operacionais. */
 export async function exigirEdicao() {
   const contexto = await exigirEscritorio();
-  if (contexto.perfilAcesso === 'viewer') throw new Error('Seu perfil possui acesso somente de leitura.');
   return contexto;
 }
 export async function exigirAdministrador() {

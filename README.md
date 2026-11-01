@@ -114,3 +114,7 @@ Consulte `documentacao/decisoes.md` para os próximos pontos de homologação.
 - **Banco**: nenhuma migração adicional nesta versão. **Bibliotecas**: mantidas as dependências da v0.3.1.
 
 Leia também `ATUALIZACAO_V0_4_0.md` para instruções de deploy e testes.
+
+
+## Alterações v0.4.1
+Consulte `ATUALIZACAO_V0_4_1.md` e execute a migração SQL `supabase/ajustes/003_permissoes_operacionais_unificadas.sql` antes de testar permissões operacionais ampliadas.

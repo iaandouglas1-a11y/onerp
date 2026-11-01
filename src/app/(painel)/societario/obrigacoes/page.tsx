@@ -6,14 +6,14 @@ import { atualizarSituacaoObrigacao,criarModeloObrigacao,salvarRegistroSocietari
 import { dataBrasileira } from '@/lib/utilitarios/formatacao';
 export default async function Obrigacoes({searchParams}:{searchParams:Promise<{nova?:string;modelo?:string}>}){
   const filtros=await searchParams;
-  const {banco,escritorioId,perfilAcesso}=await exigirEscritorio();
+  const {banco,escritorioId}=await exigirEscritorio();
   const [{data:obrigacoes},{data:clientes},{data:modelos}]=await Promise.all([
     banco.from('obrigacoes_clientes').select('*').eq('escritorio_id',escritorioId).order('data_vencimento'),
     banco.from('clientes').select('id,razao_social').eq('escritorio_id',escritorioId).order('razao_social'),
     banco.from('modelos_obrigacoes').select('*').eq('escritorio_id',escritorioId).order('nome'),
   ]);
   const nomes=Object.fromEntries((clientes??[]).map(cliente=>[cliente.id,cliente.razao_social]));
-  const podeEditar=perfilAcesso!=='viewer';
+  const podeEditar=true;
   return <><CabecalhoPagina titulo="Obrigações recorrentes" descricao="Prazos por cliente e modelos para uso operacional." acao={podeEditar?'Nova obrigação':undefined} rotaAcao="/societario/obrigacoes?nova=1"/>
     <Cartao titulo="Obrigações registradas">{!obrigacoes?.length?<ListaVazia/>:<div className="tabela-wrapper"><table className="tabela"><thead><tr><th>Obrigação</th><th>Cliente</th><th>Vencimento</th><th>Situação</th><th>Ações</th></tr></thead><tbody>{obrigacoes.map(item=><tr key={item.id}><td><Link href={`/societario/clientes/${item.cliente_id}?aba=obrigacoes`}>{item.titulo}</Link></td><td>{nomes[item.cliente_id]??'—'}</td><td>{dataBrasileira(item.data_vencimento)}</td><td><Etiqueta valor={item.situacao}/></td><td><form action={atualizarSituacaoObrigacao} className="linha"><input type="hidden" name="id" value={item.id}/><select name="situacao" defaultValue={item.situacao} className="entrada" style={{minWidth:150}} disabled={!podeEditar}>{['PENDENTE','EM_ANDAMENTO','AGUARDANDO_CLIENTE','CONCLUIDA','CANCELADA'].map(valor=><option key={valor} value={valor}>{valor.replaceAll('_',' ')}</option>)}</select>{podeEditar&&<button className="botao">Salvar</button>}</form></td></tr>)}</tbody></table></div>}</Cartao>
     <div style={{marginTop:16}}><Cartao titulo="Modelos de obrigação" subtitulo="Modelos não geram novas competências automaticamente nesta versão." acoes={podeEditar?<Link href="/societario/obrigacoes?modelo=1" className="botao primario">Novo modelo</Link>:null}>{!modelos?.length?<ListaVazia/>:modelos.map(item=><div className="item-lista" key={item.id}><div className="nome-item">{item.nome}</div><span className="muted pequeno">{item.modulo} · {item.recorrencia}</span></div>)}</Cartao></div>

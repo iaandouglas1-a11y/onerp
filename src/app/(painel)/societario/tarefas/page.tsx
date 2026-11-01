@@ -7,8 +7,8 @@ import { salvarRegistroSocietario, atualizarSituacaoTarefa } from '@/modulos/soc
 const colunas=[['A_FAZER','A fazer'],['EM_EXECUCAO','Em execução'],['AGUARDANDO_CLIENTE','Aguardando cliente'],['CONCLUIDA','Concluídas']];
 export default async function Tarefas({searchParams}:{searchParams:Promise<{nova?:string}>}){
   const {nova}=await searchParams;
-  const {banco,escritorioId,perfilAcesso}=await exigirEscritorio();
-  const podeEditar=perfilAcesso!=='viewer';
+  const {banco,escritorioId}=await exigirEscritorio();
+  const podeEditar=true;
   const [{data:registros,error:falha},{data:clientes}]=await Promise.all([banco.from('tarefas').select('id,titulo,cliente_id,data_vencimento,prioridade,situacao,descricao').eq('escritorio_id',escritorioId).order('data_vencimento',{ascending:true}),banco.from('clientes').select('id,razao_social').eq('escritorio_id',escritorioId)]);
   if(falha)throw new Error(falha.message);
   const nomes=Object.fromEntries((clientes??[]).map(item=>[item.id,item.razao_social]));

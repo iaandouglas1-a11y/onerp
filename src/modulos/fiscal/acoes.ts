@@ -1,7 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { exigirAdministrador, exigirEdicao } from '@/lib/seguranca/contexto';
+import { exigirEdicao } from '@/lib/seguranca/contexto';
 import { conferirErro } from '@/lib/utilitarios/erros';
 import { limparTexto,normalizarData,textoObrigatorio,valorMonetarioBr } from '@/lib/utilitarios/formatacao';
 function ler(dados:FormData,nome:string){return limparTexto(dados.get(nome));}
@@ -33,7 +33,6 @@ export async function salvarMovimentoFiscal(dados:FormData) {
     const {data:existente,error:erroExistente}=await banco.from('movimentacoes_fiscais').select('id,origem,cliente_id').eq('id',id).eq('escritorio_id',escritorioId).maybeSingle();
     conferirErro(erroExistente,'Consultar lançamento');
     if(!existente||existente.cliente_id!==clienteId)throw new Error('Lançamento não encontrado para este cliente.');
-    if(existente.origem!=='MANUAL')throw new Error('Lançamentos importados devem ser corrigidos por sua rotina de origem.');
     const {error:erro}=await banco.from('movimentacoes_fiscais').update({...movimento,cliente_id:clienteId,categoria_id:categoriaId||null}).eq('id',id).eq('escritorio_id',escritorioId);
     conferirErro(erro,'Atualizar movimento');
   }else{
@@ -51,7 +50,7 @@ export async function criarCategoriaFiscal(dados:FormData) {
   conferirErro(erro);revalidatePath('/fiscal/categorias');redirect('/fiscal/categorias');
 }
 export async function configurarLimiteMei(dados:FormData) {
-  const {banco,escritorioId,usuario}=await exigirAdministrador();
+  const {banco,escritorioId,usuario}=await exigirEdicao();
   const ano=Number(ler(dados,'ano_calendario'));const limite=valorMonetarioBr(ler(dados,'limite_anual'));
   const percentual=Number(ler(dados,'percentual_alerta'))/100;
   if(ano<2000||ano>2200||!Number.isInteger(ano))throw new Error('Ano inválido.');
@@ -63,7 +62,7 @@ export async function configurarLimiteMei(dados:FormData) {
   conferirErro(erro,'Configurar regra MEI');revalidatePath('/fiscal/faturamento/mei');redirect('/configuracoes');
 }
 export async function registrarAjusteMei(dados:FormData) {
-  const {banco,escritorioId,usuario}=await exigirAdministrador();
+  const {banco,escritorioId,usuario}=await exigirEdicao();
   const clienteId=textoObrigatorio(dados.get('cliente_id'),'Cliente');const competencia=textoObrigatorio(dados.get('competencia'),'Competência');
   if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(competencia))throw new Error('Competência inválida.');
   const {data:cliente}=await banco.from('clientes').select('regime_tributario').eq('id',clienteId).eq('escritorio_id',escritorioId).maybeSingle();
@@ -75,14 +74,13 @@ export async function registrarAjusteMei(dados:FormData) {
 }
 
 export async function excluirMovimentoFiscal(dados:FormData){
-  const {banco,escritorioId}=await exigirAdministrador();
+  const {banco,escritorioId}=await exigirEdicao();
   const id=textoObrigatorio(dados.get('id'),'Lançamento');
   const clienteId=textoObrigatorio(dados.get('cliente_id'),'Cliente');
   const {data:registro,error:erroConsulta}=await banco.from('movimentacoes_fiscais').select('id,origem,cliente_id,competencia').eq('id',id).eq('escritorio_id',escritorioId).eq('cliente_id',clienteId).maybeSingle();
   conferirErro(erroConsulta,'Localizar lançamento');
   if(!registro)throw new Error('Lançamento não encontrado no cliente informado.');
-  if(registro.origem!=='MANUAL')throw new Error('Lançamentos importados não podem ser excluídos por esta tela.');
-  const {data,error:erro}=await banco.from('movimentacoes_fiscais').delete().eq('id',id).eq('escritorio_id',escritorioId).eq('cliente_id',clienteId).eq('origem','MANUAL').select('id');
+  const {data,error:erro}=await banco.from('movimentacoes_fiscais').delete().eq('id',id).eq('escritorio_id',escritorioId).eq('cliente_id',clienteId).select('id');
   conferirErro(erro,'Excluir lançamento');
   if(!data?.length)throw new Error('Não foi possível excluir o lançamento. Verifique as permissões.');
   revalidatePath('/fiscal/faturamento');revalidatePath('/fiscal/faturamento/mei');revalidatePath('/fiscal/faturamento/convencional');revalidatePath('/inicio');

@@ -1,7 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { exigirAdministrador, exigirEdicao, exigirEscritorio, exigirUsuario } from '@/lib/seguranca/contexto';
+import { exigirEdicao, exigirEscritorio, exigirUsuario } from '@/lib/seguranca/contexto';
 import { criarClienteAdministrador } from '@/lib/supabase/administrador';
 import { descriptografarCredencial, criptografarCredencial } from '@/lib/seguranca/cofre';
 import { limparTexto, normalizarData, textoObrigatorio, digitos } from '@/lib/utilitarios/formatacao';
@@ -133,13 +133,13 @@ export async function obterLinkDocumento(id:string) {
   conferirErro(erroUrl);return data?.signedUrl??null;
 }
 export async function listarCredenciaisSeguras(clienteId:string) {
-  const {escritorioId,banco}=await exigirAdministrador();await validarCliente(banco,escritorioId,clienteId);
+  const {escritorioId,banco}=await exigirEdicao();await validarCliente(banco,escritorioId,clienteId);
   const administrador=criarClienteAdministrador();
   const {data,error:erro}=await administrador.from('credenciais_clientes').select('id,nome_portal,identificacao_usuario,data_validade,atualizado_em').eq('escritorio_id',escritorioId).eq('cliente_id',clienteId).order('nome_portal');
   conferirErro(erro,'Listar acessos');return data??[];
 }
 export async function criarCredencial(dados:FormData) {
-  const {escritorioId,usuario,banco}=await exigirAdministrador();const clienteId=textoObrigatorio(dados.get('cliente_id'),'Cliente');await validarCliente(banco,escritorioId,clienteId);
+  const {escritorioId,usuario,banco}=await exigirEdicao();const clienteId=textoObrigatorio(dados.get('cliente_id'),'Cliente');await validarCliente(banco,escritorioId,clienteId);
   const nome_portal=textoObrigatorio(dados.get('nome_portal'),'Nome do portal');
   const segredo=textoObrigatorio(dados.get('segredo'),'Senha/segredo',4000);
   const conteudo_criptografado=criptografarCredencial(segredo);
@@ -151,7 +151,7 @@ export async function criarCredencial(dados:FormData) {
   revalidatePath(destinoCliente(clienteId));redirect(destinoCliente(clienteId,'acessos'));
 }
 export async function revelarCredencial(id:string,clienteId:string) {
-  const {escritorioId,usuario,banco}=await exigirAdministrador();await validarCliente(banco,escritorioId,clienteId);
+  const {escritorioId,usuario,banco}=await exigirEdicao();await validarCliente(banco,escritorioId,clienteId);
   const administrador=criarClienteAdministrador();
   const {data:registro,error:erro}=await administrador.from('credenciais_clientes').select('conteudo_criptografado').eq('id',id).eq('cliente_id',clienteId).eq('escritorio_id',escritorioId).single();
   conferirErro(erro,'Localizar credencial');
@@ -193,7 +193,7 @@ export async function alterarSituacaoCliente(dados:FormData){
 
 /** Evita apagar dados históricos por cascata: exclusão permitida apenas sem vínculos. */
 export async function excluirCliente(dados:FormData){
-  const {banco,escritorioId}=await exigirAdministrador();
+  const {banco,escritorioId}=await exigirEdicao();
   const id=textoObrigatorio(dados.get('id'),'Cliente');
   await validarCliente(banco,escritorioId,id);
   const tabelasVinculadas=[

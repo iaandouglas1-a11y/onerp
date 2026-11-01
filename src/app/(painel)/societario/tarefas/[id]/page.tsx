@@ -7,7 +7,7 @@ import { dataBrasileira } from '@/lib/utilitarios/formatacao';
 import { adicionarItemTarefa,alternarItemTarefa,comentarTarefa,atualizarSituacaoTarefa } from '@/modulos/societario/acoes';
 export default async function DetalheTarefa({params,searchParams}:{params:Promise<{id:string}>;searchParams:Promise<{item?:string;comentario?:string;status?:string}>}){
   const {id}=await params;const filtros=await searchParams;
-  const {banco,escritorioId,perfilAcesso}=await exigirEscritorio();const podeEditar=perfilAcesso!=='viewer';
+  const {banco,escritorioId}=await exigirEscritorio();const podeEditar=true;
   const {data:tarefa}=await banco.from('tarefas').select('*').eq('id',id).eq('escritorio_id',escritorioId).maybeSingle();if(!tarefa)notFound();
   const [{data:itens},{data:comentarios}]=await Promise.all([
     banco.from('itens_checklist_tarefas').select('*').eq('escritorio_id',escritorioId).eq('tarefa_id',id).order('posicao'),

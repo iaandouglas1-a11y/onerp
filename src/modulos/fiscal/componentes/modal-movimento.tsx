@@ -8,7 +8,6 @@ import type { MovimentoFiscal } from '@/tipos/modelos';
 export async function ModalMovimento({novo,editar,clienteSelecionado,fecharEm,modo='todos'}:{novo?:string;editar?:string;clienteSelecionado?:string;fecharEm:string;modo?:'todos'|'mei'|'convencional'}){
   if(novo!=='1'&&!editar)return null;
   const contexto=await exigirEscritorio();
-  if(contexto.perfilAcesso==='viewer')return null;
   const [clientes,resultadoCategorias,resultadoMovimento]=await Promise.all([
     listarClientes(),
     contexto.banco.from('categorias_fiscais').select('id,nome,tipo_movimento').eq('escritorio_id',contexto.escritorioId).eq('ativo',true).order('nome'),

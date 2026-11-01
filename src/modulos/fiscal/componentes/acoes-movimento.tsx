@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import { BotaoConfirmar } from '@/componentes/globais/botao-confirmar';
 import { excluirMovimentoFiscal } from '@/modulos/fiscal/acoes';
 
@@ -7,32 +7,26 @@ type Propriedades = {
   id: string;
   base: string;
   clienteId: string;
-  permitirEdicao: boolean;
-  permitirExclusao: boolean;
-  origem: string | null | undefined;
+  origem?: string | null;
 };
 
 /**
- * Exibe SEMPRE as duas ações. Lançamentos de origem externa e perfis sem permissão
- * continuam visíveis, mas com ações desabilitadas e motivo explícito.
+ * As ações são oferecidas a qualquer usuário autenticado e vinculado ao escritório.
+ * A validação de pertencimento ao escritório é refeita no servidor em cada operação.
  */
-export function AcoesMovimento({ id, base, clienteId, permitirEdicao, permitirExclusao, origem }: Propriedades) {
-  const manual = origem === 'MANUAL';
-  const motivo = manual
-    ? 'Seu perfil não tem permissão para esta operação.'
-    : 'Lançamento importado: altere ou cancele pela rotina de origem.';
+export function AcoesMovimento({ id, base, clienteId, origem }: Propriedades) {
   const rotaEdicao = `${base}${base.includes('?') ? '&' : '?'}editar=${encodeURIComponent(id)}`;
+  const importado = origem === 'IMPORTACAO' || origem === 'DOCUMENTO_FISCAL';
+  const avisoOrigem = importado
+    ? ' Este lançamento veio de uma importação ou documento fiscal. A alteração ou exclusão não altera o documento original nem impede futuras reimportações.'
+    : '';
 
-  return <div className="acoes-registro">
-    {manual && permitirEdicao
-      ? <Link className="botao" href={rotaEdicao} aria-label="Editar lançamento fiscal"><Pencil size={13}/> Editar</Link>
-      : <button type="button" className="botao" disabled title={motivo}><Pencil size={13}/> Editar</button>}
-    {manual && permitirExclusao
-      ? <form action={excluirMovimentoFiscal}>
-          <input name="id" type="hidden" value={id}/>
-          <input name="cliente_id" type="hidden" value={clienteId}/>
-          <BotaoConfirmar mensagem="Excluir este lançamento fiscal definitivamente? O faturamento e os relatórios serão atualizados. Esta ação não poderá ser desfeita."/>
-        </form>
-      : <button type="button" className="botao perigo" disabled title={motivo}><Trash2 size={13}/> Excluir</button>}
+  return <div className="acoes-registro" aria-label="Ações do lançamento">
+    <Link className="botao" href={rotaEdicao} aria-label="Editar receita ou movimentação fiscal"><Pencil size={14}/> Editar</Link>
+    <form action={excluirMovimentoFiscal}>
+      <input name="id" type="hidden" value={id}/>
+      <input name="cliente_id" type="hidden" value={clienteId}/>
+      <BotaoConfirmar mensagem={`Excluir este lançamento fiscal definitivamente? Os totais de faturamento e relatórios serão atualizados. Esta ação não poderá ser desfeita.${avisoOrigem}`}/>
+    </form>
   </div>;
 }

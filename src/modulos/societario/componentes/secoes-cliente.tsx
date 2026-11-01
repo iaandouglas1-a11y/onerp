@@ -27,13 +27,11 @@ export function AbasCliente({id,aba}:{id:string;aba:string}){return <nav classNa
 function textoItem(item:Record<string,unknown>,campo:string,mapaServicos:Record<string,string>){const valor=String(item[campo]??'');return campo==='servico_id'?(mapaServicos[valor]??'Serviço'):(valor||'—')}
 export async function SecaoCliente({id,aba,editar}:{id:string;aba:string;editar?:string}){
   const contexto=await obterContexto();
-  const edicaoPermitida=contexto.perfilAcesso!=='viewer';
+  const edicaoPermitida=true;
   const abrirNovo=`/societario/clientes/${id}?aba=${aba}&editar=novo`;
   const fecharEm=`/societario/clientes/${id}?aba=${aba}`;
   if(aba==='acessos'){
-    const administrador=contexto.perfilAcesso==='owner'||contexto.perfilAcesso==='admin';
     const habilitado=!!process.env.SUPABASE_SERVICE_ROLE_KEY&&!!process.env.COFRE_CHAVE_CRIPTOGRAFIA;
-    if(!administrador)return <Cartao titulo="Acessos e credenciais"><div className="mensagem">Seção restrita à administração do escritório.</div></Cartao>;
     if(!habilitado)return <Cartao titulo="Acessos e credenciais"><div className="aviso-configuracao">Configure as variáveis privadas do cofre para habilitar esta função.</div></Cartao>;
     const credenciais=await listarCredenciaisSeguras(id);
     return <><Cartao titulo="Acessos cadastrados" acoes={<Link className="botao primario" href={abrirNovo}><Plus size={14}/>Novo acesso</Link>}>
