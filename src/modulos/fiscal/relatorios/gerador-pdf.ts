@@ -290,7 +290,6 @@ export async function gerarRelatorioMeiPdf(dados: RelatorioMeiPdf): Promise<Uint
     if (indice % 2 === 1) caixa(margem, fundo, largura, alturaLinha, rgb(0.985, 0.987, 0.990));
     escrever(item.mes, margem + 12, fundo + 9, 9);
     escreverDireita(formatarMoeda(item.total), margem + 268, fundo + 9, 9);
-    barraProgresso(margem + 299, fundo + 11, 142, 7, item.percentualAcumulado);
     escreverDireita(percentual(item.percentualAcumulado), larguraPagina - margem - 10, fundo + 8, 8);
     pagina.drawLine({ start: { x: margem, y: fundo }, end: { x: larguraPagina - margem, y: fundo }, thickness: 0.35, color: CORES.borda });
   });
@@ -299,7 +298,6 @@ export async function gerarRelatorioMeiPdf(dados: RelatorioMeiPdf): Promise<Uint
   caixa(margem, baseTotal, largura, 32);
   escrever('TOTAL ANUAL', margem + 12, baseTotal + 11, 9, true);
   escreverDireita(formatarMoeda(dados.receitaAnual), margem + 268, baseTotal + 11, 9, true);
-  barraProgresso(margem + 299, baseTotal + 13, 142, 7, dados.percentualAnual);
   escreverDireita(percentual(dados.percentualAnual), larguraPagina - margem - 10, baseTotal + 10, 8, true);
   if (baseTotal < 53) throw new Error('Falha de diagramação: relatório MEI excedeu uma página.');
 
