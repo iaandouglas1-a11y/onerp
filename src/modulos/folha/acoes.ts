@@ -52,11 +52,20 @@ export async function salvarEmpregado(dados:FormData){
 export async function salvarEvento(dados:FormData){
  const {banco,escritorioId}=await exigirEdicao();
  const id=ler(dados,'id');if(id)uuid(id);
- const codigo=textoObrigatorio(dados.get('codigo'),'Código',20).toUpperCase();
- if(['1000','9201','9202','9203'].includes(codigo))throw new Error('Código reservado aos cálculos automáticos.');
+ const codigo=textoObrigatorio(dados.get('codigo'),'Código',20).trim();
+ if(!/^[1-9]\d*$/.test(codigo))throw new Error('Informe um código numérico positivo, sem zeros à esquerda.');
+ if(['1','26','27','28'].includes(codigo))throw new Error('Código reservado aos cálculos automáticos.');
+ let configuracaoAnterior:Record<string,unknown>={};
+ if(id){
+  const {data:anterior,error:erroAnterior}=await banco.from('eventos_folha').select('codigo,configuracao_calculo').eq('escritorio_id',escritorioId).eq('id',id).maybeSingle();
+  conferirErro(erroAnterior,'Consultar evento');
+  if(!anterior)throw new Error('Evento não encontrado.');
+  if(['1','26','27','28'].includes(anterior.codigo))throw new Error('Este evento é calculado automaticamente e não pode ser editado.');
+  configuracaoAnterior=anterior.configuracao_calculo??{};
+ }
  const tipo=ler(dados,'tipo_evento');if(!['PROVENTO','DESCONTO','INFORMATIVO'].includes(tipo))throw new Error('Tipo de evento inválido.');
  const booleano=(nome:string)=>ler(dados,nome)==='sim';
- const cfg={incide_inss:tipo!=='INFORMATIVO'&&booleano('incide_inss'),incide_fgts:tipo!=='INFORMATIVO'&&booleano('incide_fgts'),
+ const cfg={...configuracaoAnterior,incide_inss:tipo!=='INFORMATIVO'&&booleano('incide_inss'),incide_fgts:tipo!=='INFORMATIVO'&&booleano('incide_fgts'),
  incide_irrf:tipo!=='INFORMATIVO'&&booleano('incide_irrf'),reduz_base:tipo==='DESCONTO'&&booleano('reduz_base'),calculo:'VALOR_INFORMADO'};
  const registro={codigo,nome:textoObrigatorio(dados.get('nome'),'Descrição'),tipo_evento:tipo,configuracao_calculo:cfg,ativo:ler(dados,'ativo')!=='nao'};
  if(id){const {error:erro}=await banco.from('eventos_folha').update(registro).eq('id',id).eq('escritorio_id',escritorioId);conferirErro(erro,'Editar evento');}

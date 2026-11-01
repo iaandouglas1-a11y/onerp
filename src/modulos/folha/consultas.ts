@@ -19,7 +19,8 @@ export async function listarEmpregados(){
 }
 export async function listarEventosFolha(){
  const {banco,escritorioId}=await exigirEscritorio();
- return consultarTodasPaginas<EventoFolha>((inicio,fim)=>banco.from('eventos_folha').select('*').eq('escritorio_id',escritorioId).order('codigo').range(inicio,fim));
+ const eventos=await consultarTodasPaginas<EventoFolha>((inicio,fim)=>banco.from('eventos_folha').select('*').eq('escritorio_id',escritorioId).order('codigo').range(inicio,fim));
+ return eventos.sort((a,b)=>Number(a.codigo)-Number(b.codigo));
 }
 export async function listarLancamentosFolha(competencia:string){
  const {banco,escritorioId}=await exigirEscritorio();

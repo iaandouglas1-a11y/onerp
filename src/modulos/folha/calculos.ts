@@ -67,10 +67,10 @@ export function calcularContracheque(entrada:{competencia:string;empresa:Memoria
   if(!Number.isFinite(entrada.funcionario.salario_base)||entrada.funcionario.salario_base<=0)throw new Error('Salário-base deve ser positivo.');
   if(!Number.isInteger(entrada.dependentes_irrf)||entrada.dependentes_irrf<0||entrada.dependentes_irrf>99)throw new Error('Número de dependentes inválido.');
   if(entrada.eventos.length>13)throw new Error('O modelo de contracheque admite no máximo 13 eventos adicionais para manter duas vias em uma folha.');
-  const salario:EventoCalculado={codigo:'1000',descricao:'SALÁRIO',referencia:'30d',tipo:'PROVENTO',valor:arredondar(entrada.funcionario.salario_base),incide_inss:true,incide_fgts:true,incide_irrf:true,reduz_base:false};
+  const salario:EventoCalculado={codigo:'1',descricao:'SALÁRIO',referencia:'30d',tipo:'PROVENTO',valor:arredondar(entrada.funcionario.salario_base),incide_inss:true,incide_fgts:true,incide_irrf:true,reduz_base:false};
   const extras=entrada.eventos.map(item=>({...item,valor:arredondar(item.valor)}));
   for(const item of extras){
-    if(!item.codigo||['1000','9201','9202','9203'].includes(item.codigo)||!Number.isFinite(item.valor)||item.valor<0)throw new Error('Evento incompatível com o cálculo.');
+    if(!item.codigo||['1','26','27','28'].includes(item.codigo)||!Number.isFinite(item.valor)||item.valor<0)throw new Error('Evento incompatível com o cálculo.');
     if(item.tipo==='INFORMATIVO'&&(item.incide_inss||item.incide_fgts||item.incide_irrf))throw new Error('Evento informativo não deve integrar bases de cálculo.');
   }
   const operando=(tipo:'inss'|'fgts'|'irrf')=>arredondar([salario,...extras].reduce((total,e)=>{
@@ -87,8 +87,8 @@ export function calcularContracheque(entrada:{competencia:string;empresa:Memoria
   const fgts=arredondar(baseFgts*entrada.parametros.fgts.aliquota);
   const aliquotaFaixaInss=(entrada.parametros.inss.faixas.find(f=>baseInss<=f.ate)??entrada.parametros.inss.faixas.at(-1)!).aliquota*100;
   const eventosFinais:EventoCalculado[]=[salario,...extras,
-   {codigo:'9201',descricao:'CONTRIBUIÇÃO PREVIDENCIÁRIA',referencia:`${aliquotaFaixaInss.toFixed(2).replace('.',',')}%`,tipo:'DESCONTO',valor:inss,incide_inss:false,incide_fgts:false,incide_irrf:false,reduz_base:false},
-   ...(irrf.valor>0?[{codigo:'9202',descricao:'IMPOSTO DE RENDA RETIDO',referencia:`${irrf.aliquota.toFixed(1).replace('.',',')}%`,tipo:'DESCONTO' as const,valor:irrf.valor,incide_inss:false,incide_fgts:false,incide_irrf:false,reduz_base:false}]:[])];
+   {codigo:'26',descricao:'CONTRIBUIÇÃO PREVIDENCIÁRIA',referencia:`${aliquotaFaixaInss.toFixed(2).replace('.',',')}%`,tipo:'DESCONTO',valor:inss,incide_inss:false,incide_fgts:false,incide_irrf:false,reduz_base:false},
+   ...(irrf.valor>0?[{codigo:'27',descricao:'IMPOSTO DE RENDA RETIDO',referencia:`${irrf.aliquota.toFixed(1).replace('.',',')}%`,tipo:'DESCONTO' as const,valor:irrf.valor,incide_inss:false,incide_fgts:false,incide_irrf:false,reduz_base:false}]:[])];
   const proventos=arredondar(eventosFinais.filter(e=>e.tipo==='PROVENTO').reduce((total,e)=>total+e.valor,0));
   const descontos=arredondar(eventosFinais.filter(e=>e.tipo==='DESCONTO').reduce((total,e)=>total+e.valor,0));
   return {versao:'1',competencia:entrada.competencia,empresa:entrada.empresa,funcionario:entrada.funcionario,

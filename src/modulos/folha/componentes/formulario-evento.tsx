@@ -8,7 +8,7 @@ export function FormularioEvento({evento}:{evento?:EventoFolha}){
  const padrao=(chave:string)=>cfg[chave]===true?'sim':'nao';
  return <FormularioContinuo acao={salvarEvento} modo={evento?'edicao':'cadastro'} rotaNovoAposEdicao="/folha/eventos?novo=1" className="grade-formulario">
   {evento&&<input type="hidden" name="id" value={evento.id}/>}
-  <Campo nome="codigo" rotulo="Código do evento" obrigatorio padrao={evento?.codigo} placeholder="1010"/>
+  <Campo nome="codigo" rotulo="Código do evento" tipo="number" min="1" step="1" obrigatorio padrao={evento?.codigo} placeholder="29"/>
   <Campo nome="nome" rotulo="Descrição" obrigatorio padrao={evento?.nome} placeholder="Hora extra 50%"/>
   <Campo nome="tipo_evento" rotulo="Tipo" padrao={evento?.tipo_evento||'PROVENTO'} obrigatorio opcoes={[
     {valor:'PROVENTO',rotulo:'Provento'},{valor:'DESCONTO',rotulo:'Desconto'},{valor:'INFORMATIVO',rotulo:'Informativo'}]}/>
