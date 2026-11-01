@@ -1,4 +1,14 @@
 import { CabecalhoPagina,Cartao,Campo,ListaVazia,Etiqueta } from '@/componentes/globais/elementos';
+import { JanelaModal } from '@/componentes/globais/janela-modal';
 import { exigirEscritorio } from '@/lib/seguranca/contexto';
 import { criarCategoriaFiscal } from '@/modulos/fiscal/acoes';
-export default async function CategoriasFiscais(){const {banco,escritorioId}=await exigirEscritorio();const {data:categorias}=await banco.from('categorias_fiscais').select('*').eq('escritorio_id',escritorioId).order('nome');return <><CabecalhoPagina titulo="Categorias fiscais" descricao="Classificação das receitas, entradas e despesas."/><div className="layout-detalhe"><Cartao titulo="Categorias cadastradas">{!categorias?.length?<ListaVazia/>:categorias.map(item=><div className="item-lista" key={item.id}><span>{item.nome}</span><Etiqueta valor={item.tipo_movimento}/></div>)}</Cartao><Cartao titulo="Nova categoria"><form action={criarCategoriaFiscal} className="grade"><Campo nome="nome" rotulo="Nome" obrigatorio/><Campo nome="tipo_movimento" rotulo="Tipo de movimento" obrigatorio padrao="RECEITA" opcoes={['RECEITA','ENTRADA','DESPESA'].map(valor=>({valor,rotulo:valor}))}/><button className="botao primario">Salvar categoria</button></form></Cartao></div></>}
+export default async function CategoriasFiscais({searchParams}:{searchParams:Promise<{nova?:string}>}){
+  const {nova}=await searchParams;
+  const {banco,escritorioId,perfilAcesso}=await exigirEscritorio();
+  const {data:categorias}=await banco.from('categorias_fiscais').select('*').eq('escritorio_id',escritorioId).order('nome');
+  const podeEditar=perfilAcesso!=='viewer';
+  return <><CabecalhoPagina titulo="Categorias fiscais" descricao="Classificação das receitas, entradas e despesas." acao={podeEditar?'Nova categoria':undefined} rotaAcao="/fiscal/categorias?nova=1"/>
+    <Cartao titulo="Categorias cadastradas">{!categorias?.length?<ListaVazia/>:<div className="tabela-wrapper"><table className="tabela"><thead><tr><th>Nome</th><th>Tipo de movimento</th><th>Situação</th></tr></thead><tbody>{categorias.map(item=><tr key={item.id}><td>{item.nome}</td><td><Etiqueta valor={item.tipo_movimento}/></td><td>{item.ativo?'Ativa':'Inativa'}</td></tr>)}</tbody></table></div>}</Cartao>
+    {podeEditar&&nova==='1'&&<JanelaModal titulo="Nova categoria fiscal" fecharEm="/fiscal/categorias"><form action={criarCategoriaFiscal} className="grade"><Campo nome="nome" rotulo="Nome" obrigatorio/><Campo nome="tipo_movimento" rotulo="Tipo de movimento" obrigatorio padrao="RECEITA" opcoes={['RECEITA','ENTRADA','DESPESA'].map(valor=>({valor,rotulo:valor}))}/><button className="botao primario">Salvar categoria</button></form></JanelaModal>}
+  </>;
+}

@@ -30,6 +30,10 @@ export async function salvarMovimentoFiscal(dados:FormData) {
   if(categoriaId){const {data:categoria}=await banco.from('categorias_fiscais').select('id,tipo_movimento').eq('id',categoriaId).eq('escritorio_id',escritorioId).maybeSingle();if(!categoria||categoria.tipo_movimento!==movimento.tipo_movimento)throw new Error('Categoria incompatível com o tipo de movimento.');}
   const id=ler(dados,'id');
   if(id){
+    const {data:existente,error:erroExistente}=await banco.from('movimentacoes_fiscais').select('id,origem,cliente_id').eq('id',id).eq('escritorio_id',escritorioId).maybeSingle();
+    conferirErro(erroExistente,'Consultar lançamento');
+    if(!existente||existente.cliente_id!==clienteId)throw new Error('Lançamento não encontrado para este cliente.');
+    if(existente.origem!=='MANUAL')throw new Error('Lançamentos importados devem ser corrigidos por sua rotina de origem.');
     const {error:erro}=await banco.from('movimentacoes_fiscais').update({...movimento,cliente_id:clienteId,categoria_id:categoriaId||null}).eq('id',id).eq('escritorio_id',escritorioId);
     conferirErro(erro,'Atualizar movimento');
   }else{
@@ -66,4 +70,20 @@ export async function registrarAjusteMei(dados:FormData) {
   if(valor===0)throw new Error('Informe valor diferente de zero.');
   const {error:erro}=await banco.from('ajustes_faturamento_mei').insert({escritorio_id:escritorioId,cliente_id:clienteId,competencia:`${competencia}-01`,valor,justificativa:textoObrigatorio(dados.get('justificativa'),'Justificativa'),criado_por:usuario.id});
   conferirErro(erro);revalidatePath('/fiscal/faturamento/mei');redirect(`/fiscal/faturamento/mei?cliente=${clienteId}`);
+}
+
+export async function excluirMovimentoFiscal(dados:FormData){
+  const {banco,escritorioId}=await exigirAdministrador();
+  const id=textoObrigatorio(dados.get('id'),'Lançamento');
+  const clienteId=textoObrigatorio(dados.get('cliente_id'),'Cliente');
+  const {data:registro,error:erroConsulta}=await banco.from('movimentacoes_fiscais').select('id,origem,cliente_id').eq('id',id).eq('escritorio_id',escritorioId).eq('cliente_id',clienteId).maybeSingle();
+  conferirErro(erroConsulta,'Localizar lançamento');
+  if(!registro)throw new Error('Lançamento não encontrado no cliente informado.');
+  if(registro.origem!=='MANUAL')throw new Error('Lançamentos importados não podem ser excluídos por esta tela.');
+  const {data,error:erro}=await banco.from('movimentacoes_fiscais').delete().eq('id',id).eq('escritorio_id',escritorioId).eq('cliente_id',clienteId).eq('origem','MANUAL').select('id');
+  conferirErro(erro,'Excluir lançamento');
+  if(!data?.length)throw new Error('Não foi possível excluir o lançamento. Verifique as permissões.');
+  revalidatePath('/fiscal/faturamento');revalidatePath('/fiscal/faturamento/mei');revalidatePath('/fiscal/faturamento/convencional');revalidatePath('/inicio');
+  const {data:cliente}=await banco.from('clientes').select('regime_tributario').eq('id',clienteId).eq('escritorio_id',escritorioId).maybeSingle();
+  redirect(cliente?.regime_tributario==='MEI'?`/fiscal/faturamento/mei?cliente=${clienteId}`:'/fiscal/faturamento/convencional');
 }

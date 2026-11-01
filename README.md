@@ -1,8 +1,10 @@
-# On ERP — código inicial
+# On ERP — v0.2 (Societário e Fiscal)
 
 Sistema interno da **On Contabilidade**, com foco em desktop e consultas responsivas. Identidade visual: `#0A111C`, `#7CB93C`, `#F4F6F8`, `#9AA5B4`.
 
 ## Funcionalidades neste pacote
+
+A versão 0.2 adiciona formulários em janelas flutuantes, submenus por módulo, ações de clientes e lançamentos, e exportações CSV MEI/convencional. Veja `ATUALIZACAO_V0_2.md` para as alterações e a atualização sobre a versão 0.1.
 
 - **Acesso** por e-mail/senha com Supabase Auth; criação inicial de escritório e vínculo automático do primeiro administrador pelo gatilho existente do banco.
 - **Dashboard** com dados reais dos clientes, tarefas, obrigações e receitas fiscais (não confunde receitas dos clientes com honorários do escritório).

@@ -178,3 +178,43 @@ export async function comentarTarefa(dados:FormData) {
   const {error:erro}=await banco.from('comentarios_tarefas').insert({escritorio_id:escritorioId,tarefa_id:tarefaId,comentario:textoObrigatorio(dados.get('comentario'),'Comentário',4000),autor_id:usuario.id});
   conferirErro(erro);revalidatePath(`/societario/tarefas/${tarefaId}`);
 }
+
+/** Inativar mantém lançamentos, histórico e documentos vinculados ao cliente. */
+export async function alterarSituacaoCliente(dados:FormData){
+  const {banco,escritorioId}=await exigirEdicao();
+  const id=textoObrigatorio(dados.get('id'),'Cliente');
+  const situacao=ler(dados,'situacao');
+  if(!['INATIVO','ATIVO'].includes(situacao))throw new Error('Situação inválida.');
+  const {data,error:erro}=await banco.from('clientes').update({situacao}).eq('id',id).eq('escritorio_id',escritorioId).select('id');
+  conferirErro(erro,'Atualizar situação do cliente');
+  if(!data?.length)throw new Error('Cliente não encontrado ou sem permissão para alteração.');
+  revalidatePath('/societario/clientes');revalidatePath(`/societario/clientes/${id}`);revalidatePath('/inicio');
+}
+
+/** Evita apagar dados históricos por cascata: exclusão permitida apenas sem vínculos. */
+export async function excluirCliente(dados:FormData){
+  const {banco,escritorioId}=await exigirAdministrador();
+  const id=textoObrigatorio(dados.get('id'),'Cliente');
+  await validarCliente(banco,escritorioId,id);
+  const tabelasVinculadas=[
+    'enderecos_clientes','contatos_clientes','representantes_clientes','servicos_clientes',
+    'observacoes_clientes','documentos','obrigacoes_clientes',
+    'tarefas','itens_implantacao_clientes','movimentacoes_fiscais','documentos_fiscais',
+    'ajustes_faturamento_mei','competencias_das_mei','declaracoes_anuais_mei',
+    'planos_contas','periodos_contabeis','lancamentos_contabeis','contas_bancarias',
+    'empregados','processamentos_folha','contratos_honorarios','contas_receber',
+    'movimentacoes_financeiras','importacoes'
+  ];
+  // O cofre possui acesso revogado para clientes autenticados; uma FK RESTRICT
+  // impede a exclusão se houver credenciais, sem revelar informações sensíveis.
+  for(const tabela of tabelasVinculadas){
+    const {count,error:erro}=await banco.from(tabela).select('id',{count:'exact',head:true}).eq('escritorio_id',escritorioId).eq('cliente_id',id);
+    conferirErro(erro,`Verificar vínculos em ${tabela}`);
+    if((count??0)>0)throw new Error('O cliente possui informações vinculadas e não pode ser excluído. Utilize Inativar para preservar os registros históricos.');
+  }
+  const {data,error:erro}=await banco.from('clientes').delete().eq('id',id).eq('escritorio_id',escritorioId).select('id');
+  conferirErro(erro,'Excluir cliente');
+  if(!data?.length)throw new Error('Não foi possível excluir o cliente. Verifique as permissões.');
+  revalidatePath('/societario/clientes');revalidatePath('/inicio');
+  redirect('/societario/clientes');
+}
