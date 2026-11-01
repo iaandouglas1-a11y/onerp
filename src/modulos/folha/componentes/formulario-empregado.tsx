@@ -16,6 +16,7 @@ export function FormularioEmpregado({clientes,empregado}:{clientes:ClienteResumi
   <Campo rotulo="Cargo / função" nome="cargo" padrao={empregado?.cargo}/>
   <Campo rotulo="CBO" nome="cbo" padrao={empregado?.cbo} placeholder="0000-00"/>
   <Campo rotulo="Salário-base (R$)" nome="salario" padrao={empregado?.salario} obrigatorio placeholder="2138,80"/>
+  <Campo rotulo="Divisor de horas mensais" nome="divisor_horas_mensais" tipo="number" min="1" max="400" step="0.01" padrao={empregado?.divisor_horas_mensais??null} obrigatorio placeholder="220"/>
   <Campo rotulo="Jornada" nome="jornada_trabalho" padrao={empregado?.jornada_trabalho} placeholder="44h semanais"/>
   <Campo rotulo="Admissão" nome="data_admissao" tipo="date" padrao={empregado?.data_admissao} obrigatorio/>
   <Campo rotulo="Desligamento" nome="data_desligamento" tipo="date" padrao={empregado?.data_desligamento}/>

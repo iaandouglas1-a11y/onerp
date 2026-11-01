@@ -3,13 +3,13 @@ import { exigirEscritorio } from '@/lib/seguranca/contexto';
 import { consultarTodasPaginas } from '@/lib/utilitarios/paginacao';
 
 export type Empregado = {id:string;escritorio_id:string;cliente_id:string;nome_completo:string;cpf:string|null;
- codigo_funcionario:string|null;cargo:string|null;cbo:string|null;salario:number;data_admissao:string;
+ codigo_funcionario:string|null;cargo:string|null;cbo:string|null;salario:number;divisor_horas_mensais:number|null;data_admissao:string;
  data_desligamento:string|null;data_nascimento:string|null;dependentes_irrf:number;jornada_trabalho:string|null;
  situacao:'ATIVO'|'AFASTADO'|'DESLIGADO';observacoes:string|null};
 export type EventoFolha = {id:string;codigo:string;nome:string;tipo_evento:'PROVENTO'|'DESCONTO'|'INFORMATIVO';
  configuracao_calculo:Record<string,unknown>;ativo:boolean};
 export type LancamentoFolha = {id:string;empregado_id:string;evento_id:string;cliente_id:string;competencia:string;
- referencia:string|null;valor:number;observacao:string|null};
+ referencia:string|null;tipo_referencia:string|null;quantidade_referencia:number|null;valor_unitario:number|null;parametros_calculo:Record<string,unknown>|null;valor:number;observacao:string|null};
 export type ContrachequeFolha = {id:string;empregado_id:string;cliente_id:string;competencia:string;
  situacao:'EM_CONFERENCIA'|'CONFERIDO'|'REPROCESSAMENTO_PENDENTE';gerado_em:string;memoria_calculo:Record<string,unknown>};
 

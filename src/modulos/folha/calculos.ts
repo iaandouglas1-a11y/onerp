@@ -18,7 +18,7 @@ export type RegraFgts = { aliquota:number };
 export type ParametrosFolha = { inss:RegraInss; irrf:RegraIrrf; fgts:RegraFgts;
  referencias:{INSS:string;IRRF:string;FGTS:string} };
 export type MemoriaContracheque = {
-  versao:'1'; competencia:string; empresa:{nome:string; cidade:string; cnpj:string};
+  versao:'1'; competencia:string; empresa:{nome:string; cidade:string; endereco?:string; cnpj:string};
   funcionario:{nome:string;codigo:string;cpf:string;cbo:string;cargo:string;salario_base:number};
   eventos: EventoCalculado[]; total_proventos:number; total_descontos:number; liquido:number;
   base_inss:number; base_fgts:number; deposito_fgts:number; base_irrf:number;

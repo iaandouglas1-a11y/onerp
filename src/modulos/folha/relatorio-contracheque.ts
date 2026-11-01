@@ -35,10 +35,28 @@ export async function gerarPdfContracheque(memoria:MemoriaContracheque):Promise<
    retangulo(x,cabecalhoBase,largura,46);
    desenharTexto(empregador?'EMPRESA':'EMPREGADOR',x+7,topo-13,6,negrito);
    desenharTexto(memoria.empresa.nome.slice(0,43),x+54,topo-13,7.7,negrito);
-   desenharTexto(empregador?'CIDADE':'ENDEREÇO',x+7,topo-24,6,negrito);
-   desenharTexto((memoria.empresa.cidade||'').slice(0,55),x+54,topo-24,7.2,negrito);
-   desenharTexto('CNPJ',x+7,topo-35,6,negrito);
-   desenharTexto(formatarDocumento(memoria.empresa.cnpj,'PJ'),x+54,topo-35,7.2,negrito);
+   desenharTexto('ENDEREÇO',x+7,topo-22,6,negrito);
+   const endereco=(memoria.empresa.endereco||memoria.empresa.cidade||'Endereço não cadastrado').trim();
+   // Usa até duas linhas compactas, preservando o quadro do contracheque.
+   const larguraEndereco=215, tamanhoEndereco=5.55;
+   const partes=endereco.split(/\s+/);const linhasEndereco:string[]=[''];
+   for(const parte of partes){
+     const atual=linhasEndereco.length-1;
+     const tentativa=(linhasEndereco[atual]+' '+parte).trim();
+     if(negrito.widthOfTextAtSize(tentativa,tamanhoEndereco)>larguraEndereco&&linhasEndereco[atual])linhasEndereco.push(parte);
+     else linhasEndereco[atual]=tentativa;
+   }
+   const textoEndereco=linhasEndereco.length>2 ? [linhasEndereco[0],linhasEndereco.slice(1).join(' ')] : linhasEndereco;
+   textoEndereco.slice(0,2).forEach((texto,i)=>{
+     let exibido=texto;
+     let restantes=texto.length;
+     while(restantes>0&&negrito.widthOfTextAtSize(exibido,tamanhoEndereco)>larguraEndereco){
+       restantes-=1;exibido=texto.slice(0,restantes).trimEnd()+'...';
+     }
+     desenharTexto(exibido,x+54,topo-21-i*8,tamanhoEndereco,negrito);
+   });
+   desenharTexto('CNPJ',x+7,topo-40,6,negrito);
+   desenharTexto(formatarDocumento(memoria.empresa.cnpj,'PJ'),x+54,topo-40,6.8,negrito);
    desenharTexto(empregador?'Recibo de Pagamento de Salário':'Demonstrativo de Pagamento de Salário',x+274,topo-13,10.5,negrito,largura-277,'direita');
    desenharTexto('Referente ao Mês / Ano',x+340,topo-27,6,regular,largura-343,'direita');
    desenharTexto(rotuloMes,x+340,topo-41,8,negrito,largura-343,'direita');

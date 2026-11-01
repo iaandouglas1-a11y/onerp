@@ -4,6 +4,7 @@ import { exigirEdicao } from '@/lib/seguranca/contexto';
 import { digitos, limparTexto, textoObrigatorio, valorMonetarioBr } from '@/lib/utilitarios/formatacao';
 import { conferirErro } from '@/lib/utilitarios/erros';
 import { calcularContracheque, type EventoCalculado, type ParametrosFolha } from './calculos';
+import { calcularEventoVariavel, referenciaDoEvento } from './calculo-eventos-variaveis';
 
 function ler(dados:FormData,campo:string){return limparTexto(dados.get(campo));}
 function uuid(valor:string){if(!/^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(valor))throw new Error('Identificador inválido.');return valor;}
@@ -21,6 +22,8 @@ export async function salvarEmpregado(dados:FormData){
  conferirErro(erroCliente,'Consultar cliente');if(!cliente)throw new Error('Cliente não pertence ao escritório.');
  const cpf=digitos(ler(dados,'cpf'));if(!cpfValido(cpf))throw new Error('CPF inválido.');
  const salario=valorMonetarioBr(ler(dados,'salario'));if(salario<=0)throw new Error('Salário deve ser maior que zero.');
+ const divisorHoras=Number(ler(dados,'divisor_horas_mensais'));
+ if(!Number.isFinite(divisorHoras)||divisorHoras<1||divisorHoras>400)throw new Error('Informe o divisor contratual de horas mensais (ex.: 220).');
  const admissao=textoObrigatorio(dados.get('data_admissao'),'Admissão');
  const desligamento=ler(dados,'data_desligamento')||null;
  if(!/^\d{4}-\d{2}-\d{2}$/.test(admissao)||desligamento&&!/^\d{4}-\d{2}-\d{2}$/.test(desligamento)||desligamento&&desligamento<admissao)throw new Error('Datas contratuais inválidas.');
@@ -32,7 +35,7 @@ export async function salvarEmpregado(dados:FormData){
  const nascimento=ler(dados,'data_nascimento')||null;
  const registro={nome_completo:textoObrigatorio(dados.get('nome_completo'),'Nome'),cpf,cliente_id:clienteId,
   codigo_funcionario:ler(dados,'codigo_funcionario')||null,cargo:ler(dados,'cargo')||null,cbo:ler(dados,'cbo')||null,
-  salario,data_admissao:admissao,data_desligamento:desligamento,jornada_trabalho:ler(dados,'jornada_trabalho')||null,
+  salario,divisor_horas_mensais:divisorHoras,data_admissao:admissao,data_desligamento:desligamento,jornada_trabalho:ler(dados,'jornada_trabalho')||null,
   situacao,data_nascimento:nascimento,dependentes_irrf:dependentes,observacoes:ler(dados,'observacoes')||null};
  if(id){
   const {data:anterior,error:erroAnterior}=await banco.from('empregados').select('*').eq('escritorio_id',escritorioId).eq('id',id).eq('cliente_id',clienteId).maybeSingle();
@@ -65,8 +68,12 @@ export async function salvarEvento(dados:FormData){
  }
  const tipo=ler(dados,'tipo_evento');if(!['PROVENTO','DESCONTO','INFORMATIVO'].includes(tipo))throw new Error('Tipo de evento inválido.');
  const booleano=(nome:string)=>ler(dados,nome)==='sim';
- const cfg={...configuracaoAnterior,incide_inss:tipo!=='INFORMATIVO'&&booleano('incide_inss'),incide_fgts:tipo!=='INFORMATIVO'&&booleano('incide_fgts'),
- incide_irrf:tipo!=='INFORMATIVO'&&booleano('incide_irrf'),reduz_base:tipo==='DESCONTO'&&booleano('reduz_base'),calculo:'VALOR_INFORMADO'};
+ const tipoReferencia=ler(dados,'tipo_referencia')||'VALOR';
+ if(!['DIAS','HORAS','VALOR'].includes(tipoReferencia))throw new Error('Referência inválida.');
+ const percentualAdicional=Number(ler(dados,'percentual_adicional')||0);
+ if(!Number.isFinite(percentualAdicional)||percentualAdicional<0||percentualAdicional>300)throw new Error('Adicional inválido.');
+ const cfg={...configuracaoAnterior,tipo_referencia:tipoReferencia,percentual_adicional:tipoReferencia==='HORAS'?percentualAdicional:0,calculo:tipoReferencia==='HORAS'?'HORAS_SALARIO':tipoReferencia==='DIAS'?'DIAS_SALARIO':'VALOR_INFORMADO',incide_inss:tipo!=='INFORMATIVO'&&booleano('incide_inss'),incide_fgts:tipo!=='INFORMATIVO'&&booleano('incide_fgts'),
+ incide_irrf:tipo!=='INFORMATIVO'&&booleano('incide_irrf'),reduz_base:tipo==='DESCONTO'&&booleano('reduz_base')};
  const registro={codigo,nome:textoObrigatorio(dados.get('nome'),'Descrição'),tipo_evento:tipo,configuracao_calculo:cfg,ativo:ler(dados,'ativo')!=='nao'};
  if(id){const {error:erro}=await banco.from('eventos_folha').update(registro).eq('id',id).eq('escritorio_id',escritorioId);conferirErro(erro,'Editar evento');}
  else {const {error:erro}=await banco.from('eventos_folha').insert({escritorio_id:escritorioId,...registro});conferirErro(erro,'Cadastrar evento');}
@@ -78,14 +85,24 @@ export async function salvarLancamentoEvento(dados:FormData){
  const eventoId=uuid(textoObrigatorio(dados.get('evento_id'),'Evento'));
  const competencia=validarCompetencia(textoObrigatorio(dados.get('competencia'),'Competência'));
  const id=ler(dados,'id');if(id)uuid(id);
- const valor=valorMonetarioBr(ler(dados,'valor'));if(valor<0)throw new Error('Valor não pode ser negativo.');
- const {data:empregado}=await banco.from('empregados').select('id,cliente_id').eq('escritorio_id',escritorioId).eq('id',empregadoId).maybeSingle();
- if(!empregado)throw new Error('Empregado não encontrado.');
- const {data:evento}=await banco.from('eventos_folha').select('id,ativo').eq('escritorio_id',escritorioId).eq('id',eventoId).maybeSingle();
- if(!evento?.ativo)throw new Error('Evento indisponível.');
- const {data:fechado}=await banco.from('contracheques_folha').select('id').eq('escritorio_id',escritorioId).eq('empregado_id',empregadoId).eq('competencia',competencia).eq('situacao','CONFERIDO').maybeSingle();
- if(fechado)throw new Error('Folha conferida. Reabra a competência da empresa antes de alterar lançamentos.');
- const registro={empregado_id:empregadoId,evento_id:eventoId,cliente_id:empregado.cliente_id,competencia,valor,referencia:ler(dados,'referencia')||null,observacao:ler(dados,'observacao')||null};
+ const {data:empregado,error:erroEmpregado}=await banco.from('empregados').select('id,cliente_id,salario,divisor_horas_mensais').eq('escritorio_id',escritorioId).eq('id',empregadoId).maybeSingle();
+ conferirErro(erroEmpregado,'Consultar empregado');if(!empregado)throw new Error('Empregado não encontrado.');
+ const {data:evento,error:erroEvento}=await banco.from('eventos_folha').select('id,codigo,ativo,configuracao_calculo').eq('escritorio_id',escritorioId).eq('id',eventoId).maybeSingle();
+ conferirErro(erroEvento,'Consultar evento');if(!evento?.ativo)throw new Error('Evento indisponível.');
+ const {data:fechado,error:erroFechado}=await banco.from('contracheques_folha').select('id').eq('escritorio_id',escritorioId).eq('empregado_id',empregadoId).eq('competencia',competencia).eq('situacao','CONFERIDO').maybeSingle();
+ conferirErro(erroFechado);if(fechado)throw new Error('Folha conferida. Reabra a competência da empresa antes de alterar lançamentos.');
+ const configuracao=(evento.configuracao_calculo||{}) as Record<string,unknown>;
+ const tipoReferencia=referenciaDoEvento(configuracao);
+ const quantidade=tipoReferencia==='VALOR'?null:Number(ler(dados,'quantidade_referencia'));
+ const valorInformado=tipoReferencia==='VALOR'?valorMonetarioBr(ler(dados,'valor')):null;
+ const calculado=calcularEventoVariavel({codigo:evento.codigo,tipo_referencia:tipoReferencia,
+  quantidade_referencia:quantidade,valor_informado:valorInformado,salario:Number(empregado.salario),
+  divisor_horas_mensais:empregado.divisor_horas_mensais?Number(empregado.divisor_horas_mensais):null,
+  configuracao:{percentual_adicional:Number(configuracao.percentual_adicional??0),divisor_dias:Number(configuracao.divisor_dias??30)}});
+ const registro={empregado_id:empregadoId,evento_id:eventoId,cliente_id:empregado.cliente_id,competencia,
+  valor:calculado.valor,tipo_referencia:tipoReferencia,quantidade_referencia:quantidade,valor_unitario:calculado.valor_unitario,
+  parametros_calculo:{percentual_adicional:Number(configuracao.percentual_adicional??0),divisor_dias:Number(configuracao.divisor_dias??30)},
+  referencia:calculado.referencia||ler(dados,'referencia')||null,observacao:ler(dados,'observacao')||null};
  if(id){const {error:erro}=await banco.from('lancamentos_eventos_folha').update(registro).eq('id',id).eq('escritorio_id',escritorioId);conferirErro(erro,'Editar lançamento');}
  else {const {error:erro}=await banco.from('lancamentos_eventos_folha').insert({escritorio_id:escritorioId,criado_por:usuario.id,...registro});conferirErro(erro,'Lançar evento');}
  revalidatePath('/folha/lancamentos');return {sucesso:true,mensagem:'Evento lançado. É possível incluir outro sem fechar a janela.'};
@@ -122,7 +139,12 @@ export async function gerarContracheque(dados:FormData){
  if(existente?.situacao==='CONFERIDO')throw new Error('Folha conferida. Reabra a competência da empresa antes do reprocessamento.');
  const {data:cliente,error:erroCliente}=await banco.from('clientes').select('id,razao_social,cpf_cnpj').eq('id',empregado.cliente_id).eq('escritorio_id',escritorioId).maybeSingle();
  conferirErro(erroCliente);if(!cliente)throw new Error('Empresa não localizada.');
- const {data:endereco}=await banco.from('enderecos_clientes').select('cidade,uf').eq('escritorio_id',escritorioId).eq('cliente_id',cliente.id).order('principal',{ascending:false}).limit(1).maybeSingle();
+ const {data:endereco,error:erroEndereco}=await banco.from('enderecos_clientes').select('logradouro,numero,complemento,bairro,cidade,uf,cep').eq('escritorio_id',escritorioId).eq('cliente_id',cliente.id).order('principal',{ascending:false}).limit(1).maybeSingle();
+ conferirErro(erroEndereco,'Consultar endereço do empregador');
+ const enderecoTexto=endereco?[
+   [endereco.logradouro,endereco.numero].filter(Boolean).join(', '),endereco.complemento,endereco.bairro,
+   [endereco.cidade,endereco.uf].filter(Boolean).join('/'),endereco.cep?`CEP ${endereco.cep}`:''
+  ].filter(Boolean).join(' - '):'';
  const {data:regras,error:erroRegra}=await banco.from('versoes_regras_folha').select('id,tipo_regra,inicio_vigencia,fim_vigencia,parametros,fundamento_legal,aprovado_em').eq('escritorio_id',escritorioId).lte('inicio_vigencia',competencia).not('aprovado_em','is',null);
  conferirErro(erroRegra);
  const para=(tipo:string)=>regras?.filter(r=>r.tipo_regra===tipo&&(!r.fim_vigencia||r.fim_vigencia>=competencia)).sort((a,b)=>b.inicio_vigencia.localeCompare(a.inicio_vigencia))[0];
@@ -135,15 +157,24 @@ export async function gerarContracheque(dados:FormData){
  conferirErro(erroEventos);
  const eventos:EventoCalculado[]=(lancamentos??[]).map(l=>{
   const evento=eventosBase?.find(e=>e.id===l.evento_id);if(!evento)throw new Error('Evento cadastrado não localizado.');
-  const cfg=evento.configuracao_calculo as Record<string,unknown>;
-  if(cfg.calculo!=='VALOR_INFORMADO')throw new Error(`Tipo de cálculo não suportado: ${evento.codigo}.`);
-  return {codigo:evento.codigo,descricao:evento.nome,referencia:l.referencia||'',tipo:evento.tipo_evento,valor:Number(l.valor),
-  incide_inss:cfg.incide_inss===true,incide_irrf:cfg.incide_irrf===true,incide_fgts:cfg.incide_fgts===true,reduz_base:cfg.reduz_base===true};
+  const cfg=(evento.configuracao_calculo||{}) as Record<string,unknown>;
+  // Em lançamentos anteriores à migração, preservar o valor histórico registrado.
+  const tipoLancamento=l.tipo_referencia as 'DIAS'|'HORAS'|'VALOR'|null;
+  const calculado=tipoLancamento==='DIAS'||tipoLancamento==='HORAS'?
+   calcularEventoVariavel({codigo:evento.codigo,tipo_referencia:tipoLancamento,
+    quantidade_referencia:Number(l.quantidade_referencia),salario:Number(empregado.salario),
+    divisor_horas_mensais:empregado.divisor_horas_mensais?Number(empregado.divisor_horas_mensais):null,
+    configuracao:{percentual_adicional:Number((l.parametros_calculo as Record<string,unknown>|null)?.percentual_adicional??cfg.percentual_adicional??0),
+      divisor_dias:Number((l.parametros_calculo as Record<string,unknown>|null)?.divisor_dias??cfg.divisor_dias??30)}}):null;
+  return {codigo:evento.codigo,descricao:evento.nome,referencia:calculado?.referencia||l.referencia||'',
+   tipo:evento.tipo_evento,valor:calculado?.valor??Number(l.valor),
+   incide_inss:cfg.incide_inss===true,incide_irrf:cfg.incide_irrf===true,
+   incide_fgts:cfg.incide_fgts===true,reduz_base:cfg.reduz_base===true};
  });
  const parametros:ParametrosFolha={inss:regraInss.parametros,irrf:regraIrrf.parametros,fgts:regraFgts.parametros,
  referencias:{INSS:regraInss.id,IRRF:regraIrrf.id,FGTS:regraFgts.id}};
  const memoria=calcularContracheque({competencia:competenciaTexto,
-  empresa:{nome:cliente.razao_social,cidade:endereco?.cidade?[endereco.cidade,endereco.uf].filter(Boolean).join(' - '):'',cnpj:cliente.cpf_cnpj},
+  empresa:{nome:cliente.razao_social,cidade:endereco?.cidade?[endereco.cidade,endereco.uf].filter(Boolean).join(' - '):'',endereco:enderecoTexto,cnpj:cliente.cpf_cnpj},
   funcionario:{nome:empregado.nome_completo,codigo:empregado.codigo_funcionario||'0001',cpf:empregado.cpf||'',cbo:empregado.cbo||'',cargo:empregado.cargo||'',salario_base:Number(empregado.salario)},
   dependentes_irrf:Number(empregado.dependentes_irrf||0),eventos,parametros});
  const registro={escritorio_id:escritorioId,cliente_id:cliente.id,empregado_id:empregadoId,competencia,
