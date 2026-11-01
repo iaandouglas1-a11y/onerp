@@ -279,26 +279,32 @@ export async function gerarRelatorioMeiPdf(dados: RelatorioMeiPdf): Promise<Uint
   const topoTabela = 460;
   const alturaCabecalho = 29;
   const alturaLinha = 26;
-  caixa(margem, topoTabela - alturaCabecalho, largura, alturaCabecalho);
-  escrever('Mês', margem + 12, topoTabela - 19, 9, true);
-  escreverDireita('Total', margem + 268, topoTabela - 19, 9, true);
-  escrever('Progressão do limite (%)', margem + 299, topoTabela - 19, 8.5, true);
+  // Tabela MEI mais compacta, centralizada no A4 e com colunas proporcionais.
+  // Apenas a distribuição horizontal é modificada; cálculos e demais blocos do PDF permanecem intactos.
+  const larguraTabela = 430;
+  const inicioTabela = margem + (largura - larguraTabela) / 2;
+  const limiteColunaTotal = inicioTabela + 110 + 154 - 12;
+  const limiteColunaPercentual = inicioTabela + larguraTabela - 12;
+  caixa(inicioTabela, topoTabela - alturaCabecalho, larguraTabela, alturaCabecalho);
+  escrever('Mês', inicioTabela + 12, topoTabela - 19, 9, true);
+  escreverDireita('Total', limiteColunaTotal, topoTabela - 19, 9, true);
+  escreverDireita('Progressão do limite (%)', limiteColunaPercentual, topoTabela - 19, 8.5, true);
 
   dados.meses.forEach((item, indice) => {
     const topo = topoTabela - alturaCabecalho - indice * alturaLinha;
     const fundo = topo - alturaLinha;
-    if (indice % 2 === 1) caixa(margem, fundo, largura, alturaLinha, rgb(0.985, 0.987, 0.990));
-    escrever(item.mes, margem + 12, fundo + 9, 9);
-    escreverDireita(formatarMoeda(item.total), margem + 268, fundo + 9, 9);
-    escreverDireita(percentual(item.percentualAcumulado), larguraPagina - margem - 10, fundo + 8, 8);
-    pagina.drawLine({ start: { x: margem, y: fundo }, end: { x: larguraPagina - margem, y: fundo }, thickness: 0.35, color: CORES.borda });
+    if (indice % 2 === 1) caixa(inicioTabela, fundo, larguraTabela, alturaLinha, rgb(0.985, 0.987, 0.990));
+    escrever(item.mes, inicioTabela + 12, fundo + 9, 9);
+    escreverDireita(formatarMoeda(item.total), limiteColunaTotal, fundo + 9, 9);
+    escreverDireita(percentual(item.percentualAcumulado), limiteColunaPercentual, fundo + 8, 8);
+    pagina.drawLine({ start: { x: inicioTabela, y: fundo }, end: { x: inicioTabela + larguraTabela, y: fundo }, thickness: 0.35, color: CORES.borda });
   });
 
   const baseTotal = topoTabela - alturaCabecalho - dados.meses.length * alturaLinha - 32;
-  caixa(margem, baseTotal, largura, 32);
-  escrever('TOTAL ANUAL', margem + 12, baseTotal + 11, 9, true);
-  escreverDireita(formatarMoeda(dados.receitaAnual), margem + 268, baseTotal + 11, 9, true);
-  escreverDireita(percentual(dados.percentualAnual), larguraPagina - margem - 10, baseTotal + 10, 8, true);
+  caixa(inicioTabela, baseTotal, larguraTabela, 32);
+  escrever('TOTAL ANUAL', inicioTabela + 12, baseTotal + 11, 9, true);
+  escreverDireita(formatarMoeda(dados.receitaAnual), limiteColunaTotal, baseTotal + 11, 9, true);
+  escreverDireita(percentual(dados.percentualAnual), limiteColunaPercentual, baseTotal + 10, 8, true);
   if (baseTotal < 53) throw new Error('Falha de diagramação: relatório MEI excedeu uma página.');
 
   pagina.drawLine({ start: { x: margem, y: 43 }, end: { x: larguraPagina - margem, y: 43 }, thickness: 0.6, color: CORES.borda });
