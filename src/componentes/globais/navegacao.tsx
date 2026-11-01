@@ -24,7 +24,7 @@ const modulos:ModuloMenu[]=[
   ]},
   {chave:'contabil',titulo:'Contábil',icone:BookOpen,funcoes:[{titulo:'Plano de contas'},{titulo:'Lançamentos'},{titulo:'Conciliação bancária'},{titulo:'Demonstrativos'}]},
   {chave:'folha',titulo:'Folha de pagamento',icone:UsersRound,funcoes:[{titulo:'Empregados',rota:'/folha/empregados'},{titulo:'Eventos',rota:'/folha/eventos'},{titulo:'Lançamentos',rota:'/folha/lancamentos'},{titulo:'Contracheques',rota:'/folha/contracheques'},{titulo:'Férias'}]},
-  {chave:'financeiro',titulo:'Financeiro',icone:Wallet,funcoes:[{titulo:'Honorários'},{titulo:'Recebimentos'},{titulo:'Fluxo de caixa'},{titulo:'Relatórios'}]},
+  {chave:'financeiro',titulo:'Financeiro',icone:Wallet,funcoes:[{titulo:'Visão geral',rota:'/financeiro'},{titulo:'Honorários',rota:'/financeiro/honorarios'},{titulo:'Contas a receber',rota:'/financeiro/recebimentos'},{titulo:'Contas a pagar',rota:'/financeiro/despesas'},{titulo:'Movimentações',rota:'/financeiro/movimentacoes'},{titulo:'Contas e categorias',rota:'/financeiro/contas'},{titulo:'Fluxo de caixa',rota:'/financeiro/fluxo-de-caixa'},{titulo:'Relatórios',rota:'/financeiro/relatorios'}]},
 ];
 const LARGURA_PADRAO=234;
 const LARGURA_MINIMA=210;
@@ -91,5 +91,5 @@ export function Navegacao(){
     <div className="rodape-menu"><button className="botao" type="button" onClick={async()=>{await criarClienteNavegador().auth.signOut();window.location.assign('/entrar');}}><LogOut size={14}/> Encerrar sessão</button><p style={{marginTop:15}}>On Contabilidade</p></div>
     <div className="redimensionador-lateral" role="separator" aria-label="Redimensionar menu lateral" aria-orientation="vertical" aria-controls="conteudo-principal" aria-valuemin={LARGURA_MINIMA} aria-valuemax={LARGURA_MAXIMA} aria-valuenow={larguraLateral} tabIndex={0} title="Arraste para ajustar a largura do menu" onPointerDown={iniciarArrasto} onPointerMove={moverDivisor} onPointerUp={finalizarArrasto} onPointerCancel={finalizarArrasto} onKeyDown={atalhosDivisor}/>
   </aside>
-  <nav className="navegacao-mobile" aria-label="Navegação móvel">{[{rota:'/inicio',titulo:'Início',icone:LayoutDashboard},{rota:'/societario/clientes',titulo:'Societário',icone:Building2},{rota:'/fiscal/faturamento',titulo:'Fiscal',icone:ReceiptText},{rota:'/societario/tarefas',titulo:'Tarefas',icone:ListTodo},{rota:'/configuracoes',titulo:'Ajustes',icone:Settings2}].map(item=>{const Icone=item.icone;return <Link key={item.rota} href={item.rota} className={caminho===item.rota?'ativo':''}><Icone/>{item.titulo}</Link>})}</nav></>;
+  <nav className="navegacao-mobile" aria-label="Navegação móvel">{[{rota:'/inicio',titulo:'Início',icone:LayoutDashboard},{rota:'/societario/clientes',titulo:'Societário',icone:Building2},{rota:'/fiscal/faturamento',titulo:'Fiscal',icone:ReceiptText},{rota:'/societario/tarefas',titulo:'Tarefas',icone:ListTodo},{rota:'/financeiro',titulo:'Financeiro',icone:Wallet},{rota:'/configuracoes',titulo:'Ajustes',icone:Settings2}].map(item=>{const Icone=item.icone;return <Link key={item.rota} href={item.rota} className={caminho===item.rota?'ativo':''}><Icone/>{item.titulo}</Link>})}</nav></>;
 }
