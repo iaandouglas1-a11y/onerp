@@ -1,0 +1,18 @@
+import Link from 'next/link';
+import { CabecalhoPagina, Cartao, Indicador, Etiqueta,ListaVazia } from '@/componentes/globais/elementos';
+import { exigirEscritorio } from '@/lib/seguranca/contexto';
+import { moeda,dataBrasileira,mesAtual,primeiroDiaMes } from '@/lib/utilitarios/formatacao';
+import { consultarTodasPaginas } from '@/lib/utilitarios/paginacao';
+export default async function Inicio(){const {banco,escritorioId}=await exigirEscritorio();const mes=mesAtual();
+  const [{data:clientes},{data:tarefas},{data:obrigacoes},receitas,{count:totalTarefas}]=await Promise.all([
+    banco.from('clientes').select('id,situacao').eq('escritorio_id',escritorioId),
+    banco.from('tarefas').select('id,titulo,data_vencimento,situacao').eq('escritorio_id',escritorioId).neq('situacao','CONCLUIDA').order('data_vencimento').limit(6),
+    banco.from('obrigacoes_clientes').select('id,titulo,data_vencimento,situacao').eq('escritorio_id',escritorioId).neq('situacao','CONCLUIDA').order('data_vencimento').limit(6),
+    consultarTodasPaginas<{valor:number}>((inicio,fim)=>banco.from('movimentacoes_fiscais').select('valor').eq('escritorio_id',escritorioId).eq('tipo_movimento','RECEITA').eq('competencia',primeiroDiaMes(mes)).order('id').range(inicio,fim)),
+    banco.from('tarefas').select('id',{count:'exact',head:true}).eq('escritorio_id',escritorioId).not('situacao','in','(CONCLUIDA,CANCELADA)')]);
+  const totais=clientes??[];const faturamento=receitas.reduce((soma,item)=>soma+Number(item.valor),0);
+  return <><CabecalhoPagina titulo="Visão geral" descricao="Resumo operacional da On Contabilidade."/><div className="grade colunas-4" style={{marginBottom:16}}><Indicador legenda="Clientes ativos" valor={totais.filter(item=>item.situacao==='ATIVO').length}/><Indicador legenda="Em implantação" valor={totais.filter(item=>item.situacao==='ONBOARDING').length}/><Indicador legenda="Tarefas em aberto" valor={totalTarefas??0} detalhe="Pendências não concluídas ou canceladas"/><Indicador legenda="Receita fiscal dos clientes (mês)" valor={moeda(faturamento)} detalhe="Não corresponde à receita do escritório"/></div>
+    <div className="grade colunas-2"><Cartao titulo="Tarefas próximas" acoes={<Link className="botao" href="/societario/tarefas">Ver todas</Link>}>{!tarefas?.length?<ListaVazia/>:tarefas.map(tarefa=><div className="item-lista" key={tarefa.id}><div><Link className="nome-item" href={`/societario/tarefas/${tarefa.id}`}>{tarefa.titulo}</Link><div className="subitem">Prazo: {dataBrasileira(tarefa.data_vencimento)}</div></div><Etiqueta valor={tarefa.situacao}/></div>)}</Cartao>
+      <Cartao titulo="Obrigações" acoes={<Link className="botao" href="/societario/obrigacoes">Ver todas</Link>}>{!obrigacoes?.length?<ListaVazia/>:obrigacoes.map(item=><div className="item-lista" key={item.id}><div><div className="nome-item">{item.titulo}</div><div className="subitem">Prazo: {dataBrasileira(item.data_vencimento)}</div></div><Etiqueta valor={item.situacao}/></div>)}</Cartao></div>
+    <div className="aviso-configuracao" style={{marginTop:17}}>O Financeiro da On Contabilidade, Contábil e Folha estão previstos nas próximas etapas. O faturamento mostrado acima é o dos clientes cadastrados no módulo Fiscal.</div></>;
+}

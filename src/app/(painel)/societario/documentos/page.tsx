@@ -1,0 +1,5 @@
+import Link from 'next/link';
+import { CabecalhoPagina,Cartao, ListaVazia } from '@/componentes/globais/elementos';
+import { exigirEscritorio } from '@/lib/seguranca/contexto';
+import { BotaoDocumento } from '@/modulos/societario/componentes/acoes-arquivos';
+export default async function Documentos(){const {banco,escritorioId}=await exigirEscritorio();const {data:documentos}=await banco.from('documentos').select('id,titulo,categoria,cliente_id').eq('escritorio_id',escritorioId).order('criado_em',{ascending:false}).limit(100);return <><CabecalhoPagina titulo="Documentos" descricao="Arquivos privados vinculados aos clientes."/><Cartao titulo="Documentos recentes">{!documentos?.length?<ListaVazia/>:documentos.map(item=><div className="item-lista" key={item.id}><div><div className="nome-item">{item.titulo}</div><div className="subitem">{item.categoria} · <Link href={`/societario/clientes/${item.cliente_id}?aba=documentos`}>Abrir cliente</Link></div></div><BotaoDocumento id={item.id}/></div>)}</Cartao></>}

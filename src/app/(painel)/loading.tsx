@@ -1,0 +1,1 @@
+export default function Carregando(){return <div className="grade" style={{maxWidth:900}}><div className="cartao" style={{height:110,opacity:.55}}>Carregando informações…</div><div className="cartao" style={{height:310,opacity:.45}}/></div>}
