@@ -134,6 +134,46 @@ export async function criarServico(dados:FormData) {
   const {error:erro}=await banco.from('servicos').insert({escritorio_id:escritorioId,codigo:textoObrigatorio(dados.get('codigo'),'Código').toUpperCase(),nome:textoObrigatorio(dados.get('nome'),'Nome'),descricao:vazioOuTexto(dados,'descricao')});
   conferirErro(erro);revalidatePath('/societario/servicos');return {sucesso:true,mensagem:'Serviço cadastrado. Você pode incluir outro.'};
 }
+/** Edita um serviço existente sem romper os vínculos com clientes e honorários. */
+export async function editarServico(dados: FormData) {
+  const {banco,escritorioId}=await exigirEdicao();
+  const id=textoObrigatorio(dados.get('id'),'Serviço');
+  const codigo=textoObrigatorio(dados.get('codigo'),'Código').toUpperCase();
+  const nome=textoObrigatorio(dados.get('nome'),'Nome');
+  const {data:atual,error:erroConsulta}=await banco.from('servicos')
+    .select('id').eq('id',id).eq('escritorio_id',escritorioId).maybeSingle();
+  conferirErro(erroConsulta,'Localizar serviço');
+  if(!atual)throw new Error('Serviço não encontrado neste escritório.');
+  const {error:erro}=await banco.from('servicos')
+    .update({codigo,nome,descricao:vazioOuTexto(dados,'descricao'),ativo:dados.get('ativo')==='on'})
+    .eq('id',id).eq('escritorio_id',escritorioId);
+  conferirErro(erro,'Editar serviço');
+  revalidatePath('/societario/servicos');
+  revalidatePath('/societario/clientes');
+  revalidatePath('/financeiro/honorarios');
+  return {sucesso:true,mensagem:'Serviço atualizado. Você pode cadastrar outro.'};
+}
+
+/** Exclusão definitiva somente para serviço sem contratos ou clientes vinculados. */
+export async function excluirServico(dados: FormData): Promise<void> {
+  const {banco,escritorioId}=await exigirEdicao();
+  const id=textoObrigatorio(dados.get('id'),'Serviço');
+  const {data:atual,error:erroConsulta}=await banco.from('servicos')
+    .select('id').eq('id',id).eq('escritorio_id',escritorioId).maybeSingle();
+  conferirErro(erroConsulta,'Localizar serviço');
+  if(!atual)throw new Error('Serviço não encontrado neste escritório.');
+  for(const tabela of ['servicos_clientes','contratos_honorarios']) {
+    const {count,error:erroVinculos}=await banco.from(tabela).select('id',{count:'exact',head:true})
+      .eq('escritorio_id',escritorioId).eq('servico_id',id);
+    conferirErro(erroVinculos,'Conferir vínculos do serviço');
+    if((count??0)>0)throw new Error('Serviço vinculado a clientes ou honorários. Edite e inative o serviço para preservar o histórico.');
+  }
+  const {error:erro}=await banco.from('servicos').delete().eq('id',id).eq('escritorio_id',escritorioId);
+  conferirErro(erro,'Excluir serviço');
+  revalidatePath('/societario/servicos');
+  redirect('/societario/servicos');
+}
+
 export async function criarModeloObrigacao(dados:FormData) {
   const {banco,escritorioId}=await exigirEdicao();const recorrencia=ler(dados,'recorrencia');
   if(!['MONTHLY','QUARTERLY','YEARLY','ONCE'].includes(recorrencia))throw new Error('Recorrência inválida.');
