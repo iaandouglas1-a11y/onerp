@@ -57,7 +57,9 @@ export async function gerarRelatorioPdf(conteudo: RelatorioPdf): Promise<Uint8Ar
   const margem = 38;
   const larguraUtil = larguraPagina - 2 * margem;
   const baseRodape = 30;
-  let pagina: PDFPage;
+  // A primeira página é criada antes de qualquer operação de desenho.
+  // Isso evita o erro TS2454 (variável usada antes da atribuição).
+  let pagina: PDFPage = documento.addPage([larguraPagina, alturaPagina]);
   let y = 0;
   let numeroPagina = 0;
 
@@ -66,7 +68,10 @@ export async function gerarRelatorioPdf(conteudo: RelatorioPdf): Promise<Uint8Ar
   }
 
   function novaPagina() {
-    pagina = documento.addPage([larguraPagina, alturaPagina]);
+    // Reutiliza a primeira página; as seguintes são criadas apenas quando necessárias.
+    if (numeroPagina > 0) {
+      pagina = documento.addPage([larguraPagina, alturaPagina]);
+    }
     numeroPagina++;
     pagina.drawRectangle({ x: 0, y: alturaPagina - 7, width: larguraPagina, height: 7, color: CORES.verde });
     escrever('On ERP', margem, alturaPagina - 30, 15, negrito);
