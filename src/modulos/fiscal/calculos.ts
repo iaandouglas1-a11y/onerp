@@ -20,3 +20,26 @@ export function situacaoLimite(total:number,limite:number,alerta:number) {
   const percentual=total/limite;
   return {percentual,situacao:percentual>1?'ULTRAPASSADO':percentual>=alerta?'ATENCAO':'REGULAR'} as const;
 }
+
+
+/** Evolução mensal acumulada do limite do MEI, a partir das receitas registradas. */
+export function evolucaoMensalMei(
+  ano: number,
+  movimentos: { tipo_movimento: string; valor: number; atividade_receita?: string | null; competencia: string }[],
+  ajustes: { competencia: string; valor: number }[],
+  limite: number | null,
+) {
+  let acumulado = 0;
+  return Array.from({ length: 12 }, (_, indice) => {
+    const competencia = `${ano}-${String(indice + 1).padStart(2, '0')}-01`;
+    const movimentosMes = movimentos.filter(item => item.competencia === competencia);
+    const ajustesMes = ajustes.filter(item => item.competencia === competencia);
+    const total = totalizarReceitas(movimentosMes, ajustesMes).total;
+    acumulado = Math.round((acumulado + total) * 100) / 100;
+    return {
+      competencia,
+      total,
+      percentualAcumulado: limite === null || limite <= 0 ? null : acumulado / limite,
+    };
+  });
+}

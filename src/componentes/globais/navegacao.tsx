@@ -30,7 +30,7 @@ export function Navegacao(){
   const caminho=usePathname();
   const [abertos,definirAbertos]=useState<string[]>(()=>modulos.filter(item=>caminho.startsWith(`/${item.chave}`)).map(item=>item.chave));
   function alternar(chave:string){definirAbertos(atuais=>atuais.includes(chave)?atuais.filter(item=>item!==chave):[...atuais,chave]);}
-  return <><aside className="lateral"><Link className="marca" href="/inicio"><img src="/icons/on-erp.svg" alt="Símbolo da On Contabilidade"/><div><b>On ERP</b><span>CONTABILIDADE</span></div></Link>
+  return <><aside className="lateral"><Link className="marca" href="/inicio" aria-label="On Contabilidade — início"><img src="/marca/on-contabilidade-clara.svg" alt="On Contabilidade"/></Link>
     <div className="titulo-menu">NAVEGAÇÃO</div><nav aria-label="Módulos do ERP">
       <Link href="/inicio" className={`link-menu ${caminho==='/inicio'?'ativo':''}`}><LayoutDashboard/>Dashboard</Link>
       {modulos.map(modulo=>{const Icone=modulo.icone;const aberto=abertos.includes(modulo.chave)||(!abertos.length&&caminho.startsWith(`/${modulo.chave}`));const ativo=caminho.startsWith(`/${modulo.chave}`);
@@ -41,7 +41,7 @@ export function Navegacao(){
       })}
       <Link href="/configuracoes" className={`link-menu ${caminho.startsWith('/configuracoes')?'ativo':''}`}><Settings2/>Configurações</Link>
     </nav>
-    <div className="rodape-menu"><button className="botao" type="button" onClick={async()=>{await criarClienteNavegador().auth.signOut();window.location.assign('/entrar');}}><LogOut size={14}/> Encerrar sessão</button><p style={{marginTop:15}}>On ERP · Gestão interna</p></div>
+    <div className="rodape-menu"><button className="botao" type="button" onClick={async()=>{await criarClienteNavegador().auth.signOut();window.location.assign('/entrar');}}><LogOut size={14}/> Encerrar sessão</button><p style={{marginTop:15}}>On Contabilidade</p></div>
   </aside>
   <nav className="navegacao-mobile" aria-label="Navegação móvel">{[{rota:'/inicio',titulo:'Início',icone:LayoutDashboard},{rota:'/societario/clientes',titulo:'Societário',icone:Building2},{rota:'/fiscal/faturamento',titulo:'Fiscal',icone:ReceiptText},{rota:'/societario/tarefas',titulo:'Tarefas',icone:ListTodo},{rota:'/configuracoes',titulo:'Ajustes',icone:Settings2}].map(item=>{const Icone=item.icone;return <Link key={item.rota} href={item.rota} className={caminho===item.rota?'ativo':''}><Icone/>{item.titulo}</Link>})}</nav></>;
 }

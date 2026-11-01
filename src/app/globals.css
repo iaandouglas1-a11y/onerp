@@ -27,3 +27,11 @@
 .acoes-registro{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap}
 .acoes-registro .botao{padding:7px 10px;min-height:33px;font-size:11px}
 @media(max-width:800px){.conteudo{padding:20px 14px 90px}.modal-fundo{padding:10px;align-items:flex-end}.modal-janela{max-height:92vh;border-radius:14px 14px 0 0;width:100%}.modal-corpo{padding:18px}.modal-cabecalho{padding:18px}}
+
+/* v0.4 — marca original, ações fiscais sempre visíveis e máscaras de documento */
+.marca{justify-content:center;min-height:112px;padding:0 8px 20px}
+.marca img{height:106px;width:155px;max-width:100%;border-radius:0;object-fit:contain}
+.acoes-registro{flex-wrap:nowrap;justify-content:flex-start;min-width:166px}
+.acoes-registro form{margin:0}
+.acoes-registro button:disabled{opacity:.42;cursor:not-allowed}
+.tabela td:first-child,.tabela th:first-child{white-space:nowrap}

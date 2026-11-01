@@ -1,3 +1,6 @@
+'use client';
+import { useState } from 'react';
+import { mascararDocumento } from '@/lib/utilitarios/formatacao';
 import { Campo } from '@/componentes/globais/elementos';
 import { salvarCliente } from '@/modulos/societario/acoes';
 import type { Cliente } from '@/tipos/modelos';
@@ -5,10 +8,12 @@ const pessoas=[{valor:'PJ',rotulo:'Pessoa jurídica'},{valor:'PF',rotulo:'Pessoa
 const regimes=[{valor:'MEI',rotulo:'MEI'},{valor:'SIMPLES_NACIONAL',rotulo:'Simples Nacional'},{valor:'LUCRO_PRESUMIDO',rotulo:'Lucro Presumido'},{valor:'LUCRO_REAL',rotulo:'Lucro Real'},{valor:'ISENTO',rotulo:'Isento'},{valor:'OUTRO',rotulo:'Outro'}];
 const situacoes=[{valor:'ONBOARDING',rotulo:'Em implantação'},{valor:'ATIVO',rotulo:'Ativo'},{valor:'RISCO',rotulo:'Em risco'},{valor:'INATIVO',rotulo:'Inativo'},{valor:'CANCELADO',rotulo:'Cancelado'}];
 export function FormularioCliente({cliente}:{cliente?:Cliente|null}) {
+  const [tipoPessoa, definirTipoPessoa] = useState<'PF' | 'PJ'>(cliente?.tipo_pessoa ?? 'PJ');
+  const [documento, definirDocumento] = useState(() => mascararDocumento(cliente?.cpf_cnpj ?? '', cliente?.tipo_pessoa ?? 'PJ'));
   return <form action={salvarCliente} className="grade-formulario">
     <input type="hidden" name="id" value={cliente?.id??''}/>
-    <Campo rotulo="Tipo de pessoa" nome="tipo_pessoa" obrigatorio padrao={cliente?.tipo_pessoa??'PJ'} opcoes={pessoas}/>
-    <Campo rotulo="CPF/CNPJ (apenas números)" nome="cpf_cnpj" obrigatorio padrao={cliente?.cpf_cnpj}/>
+    <div className="campo"><label htmlFor="tipo_pessoa">Tipo de pessoa *</label><select name="tipo_pessoa" id="tipo_pessoa" value={tipoPessoa} onChange={evento => { definirTipoPessoa(evento.target.value as 'PF' | 'PJ'); definirDocumento(''); }}>{pessoas.map(pessoa => <option key={pessoa.valor} value={pessoa.valor}>{pessoa.rotulo}</option>)}</select></div>
+    <div className="campo"><label htmlFor="cpf_cnpj">{tipoPessoa === 'PJ' ? 'CNPJ' : 'CPF'} *</label><input id="cpf_cnpj" name="cpf_cnpj" type="text" inputMode="numeric" autoComplete="off" required maxLength={tipoPessoa === 'PJ' ? 18 : 14} placeholder={tipoPessoa === 'PJ' ? '00.000.000/0000-00' : '000.000.000-00'} value={documento} onChange={evento => definirDocumento(mascararDocumento(evento.target.value, tipoPessoa))}/></div>
     <div className="largo"><Campo rotulo="Nome completo / Razão social" nome="razao_social" obrigatorio padrao={cliente?.razao_social}/></div>
     <Campo rotulo="Nome fantasia" nome="nome_fantasia" padrao={cliente?.nome_fantasia}/>
     <Campo rotulo="Regime tributário" nome="regime_tributario" padrao={cliente?.regime_tributario} opcoes={regimes}/>

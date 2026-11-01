@@ -1,4 +1,4 @@
-# On ERP — v0.3.1 (Societário e Fiscal)
+# On ERP — v0.4.0 (Societário e Fiscal)
 
 Sistema interno da **On Contabilidade**, com foco em desktop e consultas responsivas. Identidade visual: `#0A111C`, `#7CB93C`, `#F4F6F8`, `#9AA5B4`.
 
@@ -103,3 +103,14 @@ public/icons/               # identidade visual / PWA
 - Os 50 nomes de tabelas do schema anterior foram preservados. Os valores internos de `situacao`/`perfil_acesso` também foram mantidos em inglês onde já existiam restrições CHECK no banco, evitando uma nova migração incompatível.
 
 Consulte `documentacao/decisoes.md` para os próximos pontos de homologação.
+
+
+## Alterações consolidadas na versão 0.4.0
+
+- Ações **Editar** e **Excluir** aparecem na primeira coluna das listagens de faturamento MEI, convencional e geral. Edição: registros manuais e perfis autorizados; exclusão: registros manuais por administrador/proprietário. Registros importados mostram ações desabilitadas, sem permitir alterar dados de origem externa.
+- Campos e listagens exibem CNPJ no formato `00.000.000/0000-00` e CPF em `000.000.000-00`, com persistência dos dígitos sem máscara.
+- O PDF de faturamento MEI tem **uma única página A4**, resumo anual, barra de progresso do limite e tabela de 12 meses com **Mês, Total e Progressão do limite (%)**. Percentuais são acumulados. Detalhamentos, ajustes e observações não são exibidos; os ajustes existentes continuam compondo os valores calculados.
+- O cabeçalho dos PDFs utiliza o logotipo On Contabilidade, sem "On ERP" ou "controle interno do escritório". A navegação e o login mostram a marca oficial.
+- **Banco**: nenhuma migração adicional nesta versão. **Bibliotecas**: mantidas as dependências da v0.3.1.
+
+Leia também `ATUALIZACAO_V0_4_0.md` para instruções de deploy e testes.

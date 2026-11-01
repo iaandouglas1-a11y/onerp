@@ -32,3 +32,30 @@ export function limparTexto(valor: FormDataEntryValue | null, limite=400) { retu
 export function textoObrigatorio(valor: FormDataEntryValue | null, rotulo: string, limite=250) {
   const texto = limparTexto(valor,limite); if (!texto) throw new Error(`${rotulo} é obrigatório.`); return texto;
 }
+
+/** Aplica máscara para apresentação sem alterar o dado salvo (somente dígitos). */
+export function formatarDocumento(valor: string | null | undefined, tipo?: 'PF' | 'PJ' | string): string {
+  if (!valor) return '—';
+  const numeros = digitos(valor);
+  if ((tipo === 'PJ' || numeros.length === 14) && numeros.length === 14) {
+    return numeros.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+  }
+  if ((tipo === 'PF' || numeros.length === 11) && numeros.length === 11) {
+    return numeros.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
+  }
+  return valor;
+}
+
+/** Máscara progressiva, apropriada para digitação no formulário de cadastro. */
+export function mascararDocumento(valor: string, tipo: 'PF' | 'PJ'): string {
+  const numeros = digitos(valor).slice(0, tipo === 'PJ' ? 14 : 11);
+  if (tipo === 'PJ') {
+    return numeros.replace(/^(\d{2})(\d)/, '$1.$2')
+      .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+      .replace(/\.(\d{3})(\d)/, '.$1/$2')
+      .replace(/(\d{4})(\d)/, '$1-$2');
+  }
+  return numeros.replace(/^(\d{3})(\d)/, '$1.$2')
+    .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+    .replace(/(\d{3})(\d)/, '$1-$2');
+}

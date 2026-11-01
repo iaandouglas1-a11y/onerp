@@ -1,3 +1,4 @@
+import { formatarDocumento } from '@/lib/utilitarios/formatacao';
 import Link from 'next/link';
 import { CabecalhoPagina, Cartao, Campo, ListaVazia } from '@/componentes/globais/elementos';
 import { JanelaModal } from '@/componentes/globais/janela-modal';
@@ -14,7 +15,7 @@ export default async function Configuracoes({searchParams}:{searchParams:Promise
   ]);
   const administrador=perfilAcesso==='owner'||perfilAcesso==='admin';
   return <><CabecalhoPagina titulo="Configurações" descricao="Identificação do escritório e parâmetros fiscalmente relevantes."/>
-    <div className="grade colunas-2"><Cartao titulo="Escritório"><div className="metrica-lista"><span>Nome</span><b>{escritorio?.nome||'—'}</b></div><div className="metrica-lista"><span>Razão social</span><b>{escritorio?.razao_social||'—'}</b></div><div className="metrica-lista"><span>CPF/CNPJ</span><b>{escritorio?.cpf_cnpj||'—'}</b></div></Cartao>
+    <div className="grade colunas-2"><Cartao titulo="Escritório"><div className="metrica-lista"><span>Nome</span><b>{escritorio?.nome||'—'}</b></div><div className="metrica-lista"><span>Razão social</span><b>{escritorio?.razao_social||'—'}</b></div><div className="metrica-lista"><span>CPF/CNPJ</span><b>{formatarDocumento(escritorio?.cpf_cnpj)}</b></div></Cartao>
       <Cartao titulo="Usuários do escritório"><p className="muted pequeno">Controle de papéis definido no Supabase. Convites serão incluídos depois.</p>{(membros??[]).map(membro=><div className="item-lista" key={membro.usuario_id}><div><div className="nome-item">{membro.usuario_id.slice(0,8)}…</div><div className="subitem">{membro.perfil_acesso}</div></div><span className="etiqueta verde">{membro.ativo?'Ativo':'Inativo'}</span></div>)}</Cartao>
       <Cartao titulo="Limites MEI aprovados" acoes={administrador?<Link className="botao primario" href="/configuracoes?limite=1">Parametrizar limite</Link>:null}>{!regras?.length?<ListaVazia/>:regras.map(regra=><div className="item-lista" key={regra.id}><div><div className="nome-item">{regra.ano_calendario} · {moeda(regra.limite_anual)}</div><div className="subitem">Alerta: {(Number(regra.percentual_alerta)*100).toLocaleString('pt-BR')}% · {regra.fundamento_legal||'Sem referência'}</div></div><span className="etiqueta">{regra.aprovado_em?'Aprovada':'Não aprovada'}</span></div>)}</Cartao>
       <Cartao titulo="Módulos desta versão"><p className="muted pequeno">Societário e faturamento Fiscal operacionais. Contábil, Folha e Financeiro permanecem planejados.</p><Link className="botao" href="/inicio">Voltar ao Dashboard</Link></Cartao>

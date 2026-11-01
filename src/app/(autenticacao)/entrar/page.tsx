@@ -67,12 +67,9 @@ export default function Entrar() {
   return (
     <main style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 20, background: '#0A111C' }}>
       <div className="cartao" style={{ width: '100%', maxWidth: 390, padding: 34 }}>
-        <div className="linha" style={{ marginBottom: 26 }}>
-          <img src="/icons/on-erp.svg" alt="On Contabilidade" style={{ width: 58, height: 58, borderRadius: 10 }} />
-          <div>
-            <h1 style={{ margin: 0 }}>On ERP</h1>
-            <p className="muted pequeno" style={{ margin: 0 }}>Acesso interno</p>
-          </div>
+        <div style={{ textAlign: 'center', marginBottom: 26 }}>
+          <img src="/marca/on-contabilidade-escura.svg" alt="On Contabilidade" style={{ width: 170, height: 140, objectFit: 'contain', maxWidth: '100%' }} />
+          <p className="muted pequeno" style={{ margin: 0 }}>Acesso interno</p>
         </div>
 
         <h2>Entrar na plataforma</h2>

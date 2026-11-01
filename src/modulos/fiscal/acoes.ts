@@ -41,7 +41,9 @@ export async function salvarMovimentoFiscal(dados:FormData) {
     conferirErro(erro,'Incluir movimento');
   }
   revalidatePath('/fiscal/faturamento');revalidatePath('/fiscal/faturamento/mei');revalidatePath('/fiscal/faturamento/convencional');
-  redirect(`/fiscal/faturamento${cliente.regime_tributario==='MEI'?`/mei?cliente=${clienteId}`:'/convencional'}`);
+  redirect(cliente.regime_tributario === 'MEI'
+    ? `/fiscal/faturamento/mei?cliente=${clienteId}&competencia=${movimento.competencia.slice(0, 7)}`
+    : `/fiscal/faturamento/convencional?competencia=${movimento.competencia.slice(0, 7)}`);
 }
 export async function criarCategoriaFiscal(dados:FormData) {
   const {banco,escritorioId}=await exigirEdicao();const tipo=ler(dados,'tipo_movimento');if(!['RECEITA','ENTRADA','DESPESA'].includes(tipo))throw new Error('Tipo inválido.');
@@ -76,7 +78,7 @@ export async function excluirMovimentoFiscal(dados:FormData){
   const {banco,escritorioId}=await exigirAdministrador();
   const id=textoObrigatorio(dados.get('id'),'Lançamento');
   const clienteId=textoObrigatorio(dados.get('cliente_id'),'Cliente');
-  const {data:registro,error:erroConsulta}=await banco.from('movimentacoes_fiscais').select('id,origem,cliente_id').eq('id',id).eq('escritorio_id',escritorioId).eq('cliente_id',clienteId).maybeSingle();
+  const {data:registro,error:erroConsulta}=await banco.from('movimentacoes_fiscais').select('id,origem,cliente_id,competencia').eq('id',id).eq('escritorio_id',escritorioId).eq('cliente_id',clienteId).maybeSingle();
   conferirErro(erroConsulta,'Localizar lançamento');
   if(!registro)throw new Error('Lançamento não encontrado no cliente informado.');
   if(registro.origem!=='MANUAL')throw new Error('Lançamentos importados não podem ser excluídos por esta tela.');
@@ -85,5 +87,7 @@ export async function excluirMovimentoFiscal(dados:FormData){
   if(!data?.length)throw new Error('Não foi possível excluir o lançamento. Verifique as permissões.');
   revalidatePath('/fiscal/faturamento');revalidatePath('/fiscal/faturamento/mei');revalidatePath('/fiscal/faturamento/convencional');revalidatePath('/inicio');
   const {data:cliente}=await banco.from('clientes').select('regime_tributario').eq('id',clienteId).eq('escritorio_id',escritorioId).maybeSingle();
-  redirect(cliente?.regime_tributario==='MEI'?`/fiscal/faturamento/mei?cliente=${clienteId}`:'/fiscal/faturamento/convencional');
+  redirect(cliente?.regime_tributario === 'MEI'
+    ? `/fiscal/faturamento/mei?cliente=${clienteId}&competencia=${registro.competencia.slice(0, 7)}`
+    : `/fiscal/faturamento/convencional?competencia=${registro.competencia.slice(0, 7)}`);
 }

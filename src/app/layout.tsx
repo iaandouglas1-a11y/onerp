@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { RegistroPwa } from '@/componentes/globais/registro-pwa';
 export const metadata: Metadata = {
-  title: { default: 'On ERP', template: '%s | On ERP' },
+  title: { default: 'On Contabilidade', template: '%s | On Contabilidade' },
   description: 'Gestão contábil e financeira da On Contabilidade',
   applicationName: 'On ERP',
   icons: { icon: '/icons/on-erp.svg' },

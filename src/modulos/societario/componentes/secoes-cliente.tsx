@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Cartao, Campo, Etiqueta, ListaVazia } from '@/componentes/globais/elementos';
+import { CampoDocumento } from '@/componentes/globais/campo-documento';
 import { registrosCliente } from '@/modulos/societario/consultas';
 import { salvarRegistroSocietario, atualizarSituacaoTarefa,atualizarSituacaoObrigacao,alternarItem,enviarDocumento,criarCredencial,listarCredenciaisSeguras } from '@/modulos/societario/acoes';
 import { BotaoDocumento,BotaoRevelar } from './acoes-arquivos';
@@ -67,7 +68,9 @@ export async function SecaoCliente({id,aba,editar}:{id:string;aba:string;editar?
     {aba==='servicos'&&servicos.length===0&&<div className="aviso-configuracao">Cadastre primeiro um serviço no <Link href="/societario/servicos">catálogo de serviços</Link>.</div>}
     <form action={salvarRegistroSocietario} className="grade-formulario"><input type="hidden" name="tipo" value={configuracao.tipo}/><input type="hidden" name="cliente_id" value={id}/><input type="hidden" name="registro_id" value={registroAtual?String(registroAtual.id):''}/>
       {aba==='servicos'&&<Campo rotulo="Serviço" nome="servico_id" obrigatorio padrao={registroAtual?.servico_id?String(registroAtual.servico_id):''} opcoes={servicos.map(item=>({valor:item.id,rotulo:item.nome}))}/>}
-      {configuracao.campos.map(campo=><Campo key={campo.nome} nome={campo.nome} rotulo={campo.rotulo} tipo={campo.tipo||'text'} obrigatorio={campo.obrigatorio} padrao={registroAtual?.[campo.nome]===null?'':String(registroAtual?.[campo.nome]??'')} opcoes={campo.opcoes}/>)}
+      {configuracao.campos.map(campo=>campo.nome==='cpf_cnpj'
+        ? <CampoDocumento key={campo.nome} nome={campo.nome} rotulo={campo.rotulo} padrao={String(registroAtual?.[campo.nome]??'')}/>
+        : <Campo key={campo.nome} nome={campo.nome} rotulo={campo.rotulo} tipo={campo.tipo||'text'} obrigatorio={campo.obrigatorio} padrao={registroAtual?.[campo.nome]===null?'':String(registroAtual?.[campo.nome]??'')} opcoes={campo.opcoes}/>)}
       {(aba==='contatos'||aba==='enderecos')&&<label className="linha pequeno"><input type="checkbox" name="principal" defaultChecked={Boolean(registroAtual?.principal)}/>Principal</label>}
       <div className="largo linha"><button type="submit" className="botao primario">{registroAtual?'Salvar alterações':'Adicionar'}</button><Link href={fecharEm} className="botao">Cancelar</Link></div>
     </form>
