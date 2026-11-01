@@ -4,7 +4,7 @@ import { CampoDocumento } from '@/componentes/globais/campo-documento';
 import { registrosCliente } from '@/modulos/societario/consultas';
 import { salvarRegistroSocietario, atualizarSituacaoTarefa,atualizarSituacaoObrigacao,alternarItem,enviarDocumento,criarCredencial,listarCredenciaisSeguras } from '@/modulos/societario/acoes';
 import { BotaoDocumento,BotaoRevelar } from './acoes-arquivos';
-import { dataBrasileira } from '@/lib/utilitarios/formatacao';
+import { dataBrasileira, formatarDocumento } from '@/lib/utilitarios/formatacao';
 import { obterContexto } from '@/lib/seguranca/contexto';
 import { JanelaModal } from '@/componentes/globais/janela-modal';
 import { FormularioContinuo } from '@/componentes/globais/formulario-continuo';
@@ -36,7 +36,7 @@ export async function SecaoCliente({id,aba,editar}:{id:string;aba:string;editar?
     if(!habilitado)return <Cartao titulo="Acessos e credenciais"><div className="aviso-configuracao">Configure as variáveis privadas do cofre para habilitar esta função.</div></Cartao>;
     const credenciais=await listarCredenciaisSeguras(id);
     return <><Cartao titulo="Acessos cadastrados" acoes={<Link className="botao primario" href={abrirNovo}><Plus size={14}/>Novo acesso</Link>}>
-      {credenciais.length===0?<ListaVazia/>:credenciais.map(item=><div className="item-lista" key={item.id}><div><div className="nome-item">{item.nome_portal}</div><div className="subitem">Usuário: {item.identificacao_usuario||'—'} · Validade: {dataBrasileira(item.data_validade)}</div></div><BotaoRevelar id={item.id} clienteId={id}/></div>)}
+      {credenciais.length===0?<ListaVazia/>:credenciais.map(item=><div className="item-lista" key={item.id}><div><div className="nome-item">{item.nome_portal}</div><div className="subitem">CPF/usuário: {item.nome_portal.toLowerCase()==='gov.br'?formatarDocumento(item.identificacao_usuario,'PF'):(item.identificacao_usuario||'—')} · Validade: {dataBrasileira(item.data_validade)}</div></div><BotaoRevelar id={item.id} clienteId={id}/></div>)}
     </Cartao>
     {editar==='novo'&&<JanelaModal titulo="Novo acesso" descricao="Dados protegidos do cliente" fecharEm={fecharEm}><FormularioContinuo className="grade" acao={criarCredencial}><input type="hidden" name="cliente_id" value={id}/><Campo nome="nome_portal" rotulo="Portal/Sistema" obrigatorio/><Campo nome="identificacao_usuario" rotulo="Identificação do usuário"/><div className="campo"><label htmlFor="segredo">Segredo / senha *</label><input id="segredo" type="password" name="segredo" required autoComplete="new-password"/></div><Campo nome="data_validade" rotulo="Validade" tipo="date"/><p className="muted pequeno">A senha é criptografada e não é exportada em relatórios.</p><button className="botao primario">Salvar no cofre</button></FormularioContinuo></JanelaModal>}
     </>;

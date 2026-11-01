@@ -6,6 +6,7 @@ import { criarClienteAdministrador } from '@/lib/supabase/administrador';
 import { descriptografarCredencial, criptografarCredencial } from '@/lib/seguranca/cofre';
 import { limparTexto, normalizarData, textoObrigatorio, digitos } from '@/lib/utilitarios/formatacao';
 import { conferirErro } from '@/lib/utilitarios/erros';
+import { prepararAcessoGovBr, gravarAcessoGovBr } from '@/modulos/societario/acesso-govbr';
 
 function ler(dados:FormData, nome:string, limite=300){return limparTexto(dados.get(nome),limite);}
 function vazioOuTexto(dados:FormData,nome:string){return ler(dados,nome)||null;}
@@ -33,13 +34,35 @@ function dadosCliente(dados:FormData) {
     cnaes_secundarios:ler(dados,'cnaes_secundarios',800).split(',').map(item=>item.trim()).filter(Boolean),situacao,observacoes:vazioOuTexto(dados,'observacoes')};
 }
 export async function salvarCliente(dados:FormData) {
-  const {banco,escritorioId}=await exigirEdicao();
+  const {banco,escritorioId,usuario}=await exigirEdicao();
   const valores=dadosCliente(dados);
   const identificador=ler(dados,'id');
-  if(identificador){const {error:erro}=await banco.from('clientes').update(valores).eq('id',identificador).eq('escritorio_id',escritorioId);conferirErro(erro,'Atualizar cliente');revalidatePath('/societario/clientes');revalidatePath(destinoCliente(identificador));return {sucesso:true,mensagem:'Dados do cliente atualizados.',id:identificador};}
+  if(identificador){
+    await validarCliente(banco,escritorioId,identificador);
+    const acessoGov=await prepararAcessoGovBr(dados,escritorioId,identificador);
+    const {error:erro}=await banco.from('clientes').update(valores).eq('id',identificador).eq('escritorio_id',escritorioId);
+    conferirErro(erro,'Atualizar cliente');
+    if(acessoGov){
+      try { await gravarAcessoGovBr(acessoGov,escritorioId,identificador,usuario.id); }
+      catch { throw new Error('Os dados cadastrais foram atualizados, mas a credencial gov.br não pôde ser salva no cofre. Abra novamente a edição para conferir o acesso.'); }
+    }
+    revalidatePath('/societario/clientes');revalidatePath(destinoCliente(identificador));
+    return {sucesso:true,mensagem:'Dados do cliente atualizados.',id:identificador};
+  }
+  const acessoGov=await prepararAcessoGovBr(dados,escritorioId,null);
   const {data:registro,error:erro}=await banco.from('clientes').insert({...valores,escritorio_id:escritorioId}).select('id').single();
   conferirErro(erro,'Cadastrar cliente');
-  revalidatePath('/societario/clientes');return {sucesso:true,mensagem:'Cliente cadastrado. Você pode incluir outro.',id:registro!.id};
+  if(acessoGov){
+    try { await gravarAcessoGovBr(acessoGov,escritorioId,registro!.id,usuario.id); }
+    catch {
+      // O cliente foi criado. Não o excluir automaticamente: o cofre pode ter sido salvo
+      // antes de uma falha de auditoria. Informar o estado evita cadastros duplicados.
+      revalidatePath('/societario/clientes');
+      return {sucesso:false,mensagem:'O cliente foi cadastrado, mas não foi possível confirmar o acesso gov.br. Não tente cadastrar novamente: localize o cliente na lista e confira a aba Acessos.',id:registro!.id};
+    }
+  }
+  revalidatePath('/societario/clientes');
+  return {sucesso:true,mensagem:'Cliente cadastrado. Você pode incluir outro.',id:registro!.id};
 }
 async function validarCliente(banco:Awaited<ReturnType<typeof exigirEdicao>>['banco'],escritorioId:string,clienteId:string) {
   const {data:cliente,error:erro}=await banco.from('clientes').select('id').eq('escritorio_id',escritorioId).eq('id',clienteId).maybeSingle();
