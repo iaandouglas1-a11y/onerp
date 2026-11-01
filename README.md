@@ -1,15 +1,15 @@
-# On ERP — v0.2 (Societário e Fiscal)
+# On ERP — v0.3.1 (Societário e Fiscal)
 
 Sistema interno da **On Contabilidade**, com foco em desktop e consultas responsivas. Identidade visual: `#0A111C`, `#7CB93C`, `#F4F6F8`, `#9AA5B4`.
 
 ## Funcionalidades neste pacote
 
-A versão 0.2 adiciona formulários em janelas flutuantes, submenus por módulo, ações de clientes e lançamentos, e exportações CSV MEI/convencional. Veja `ATUALIZACAO_V0_2.md` para as alterações e a atualização sobre a versão 0.1.
+Esta versão consolida as melhorias de navegação e formulários da v0.2, a exportação PDF da v0.3 e a correção de compilação do gerador PDF da v0.3.1. Consulte `ATUALIZACAO_V0_2.md`, `ATUALIZACAO_V0_3.md` e `ATUALIZACAO_V0_3_1.md` para o histórico.
 
 - **Acesso** por e-mail/senha com Supabase Auth; criação inicial de escritório e vínculo automático do primeiro administrador pelo gatilho existente do banco.
 - **Dashboard** com dados reais dos clientes, tarefas, obrigações e receitas fiscais (não confunde receitas dos clientes com honorários do escritório).
 - **Societário**: clientes PJ/PF, edição, endereços, representantes, contatos, serviços contratados, observações, documentos privados, credenciais criptografadas, onboarding, obrigações recorrentes e tarefas com checklist/comentários. Kanban por situação, sem drag-and-drop na primeira versão.
-- **Fiscal**: lançamentos de receitas, entradas e despesas, competência, categorias, consultas convencional e MEI, relatórios CSV, ajustes MEI e acompanhamento do limite parametrizado e aprovado.
+- **Fiscal**: lançamentos de receitas, entradas e despesas, competência, categorias, consultas convencional e MEI, relatórios PDF, ajustes MEI e acompanhamento do limite parametrizado e aprovado.
 - **PWA**: manifesto, ícones e tela de indisponibilidade, sem cache offline de dados confidenciais.
 - **Não implementados**: cálculos de folha/contábil, emissão de guias, integrações governamentais, envio de cobranças e demais módulos futuros.
 
@@ -99,7 +99,7 @@ public/icons/               # identidade visual / PWA
 - A auditoria de inserções/alterações/exclusões é habilitada pelo ajuste `002`, registrando autor, tabela e operação sem valores de campos. Antes de produção, definir controles de retenção, testes de integridade e trilhas mais detalhadas quando necessárias.
 - A existência de tabela `modelos_obrigacoes` não implica criação automática de novas competências; essa automação será implementada depois.
 - Regime tributário atual do cliente é utilizado para separar MEI e convencional; a evolução precisa preservar o **histórico de enquadramento** para relatórios retroativos.
-- CSV é exportação de movimentações, não relatório fiscal oficial.
+- O PDF exportado é um relatório gerencial interno, não substitui documento fiscal ou declaração oficial.
 - Os 50 nomes de tabelas do schema anterior foram preservados. Os valores internos de `situacao`/`perfil_acesso` também foram mantidos em inglês onde já existiam restrições CHECK no banco, evitando uma nova migração incompatível.
 
 Consulte `documentacao/decisoes.md` para os próximos pontos de homologação.
