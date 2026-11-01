@@ -79,9 +79,12 @@ export async function gerarPdfContracheque(memoria:MemoriaContracheque):Promise<
    eventos.forEach((evento,i)=>{
      const posY=eventosTopo-25-i*10;
      desenharTexto(evento.codigo,coluna[0]+6,posY,7.5);
-     const descricao=evento.descricao.slice(0,43);
+     const descricao=evento.descricao.toLocaleUpperCase('pt-BR').slice(0,43);
      desenharTexto(descricao,coluna[1]+3,posY,7.2);
-     desenharTexto(evento.referencia.slice(0,14),coluna[2]+1,posY,7.2,regular,coluna[3]-coluna[2]-3,'centro');
+     // Exibe apenas a medida de cálculo (ex.: 9h, 1d ou 9,00%),
+     // sem notas complementares como o adicional (100%).
+     const referenciaVisivel=evento.referencia.replace(/\s*\([^)]*\)/g,'').trim();
+     desenharTexto(referenciaVisivel.slice(0,14),coluna[2]+1,posY,7.2,regular,coluna[3]-coluna[2]-3,'centro');
      if(evento.tipo==='PROVENTO')desenharTexto(dinheiro(evento.valor),coluna[3]+1,posY,7.5,regular,coluna[4]-coluna[3]-3,'direita');
      if(evento.tipo==='DESCONTO')desenharTexto(dinheiro(evento.valor),coluna[4]+1,posY,7.5,regular,coluna[5]-coluna[4]-3,'direita');
    });
