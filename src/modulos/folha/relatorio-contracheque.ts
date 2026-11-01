@@ -68,18 +68,25 @@ export async function gerarPdfContracheque(memoria:MemoriaContracheque):Promise<
      if(evento.tipo==='DESCONTO')desenharTexto(dinheiro(evento.valor),coluna[4]+1,posY,7.5,regular,coluna[5]-coluna[4]-3,'direita');
    });
    desenharTexto('MENSAGENS',x+1,eventosBase-7,6);
-   const totaisBase=topo-306;
-   retangulo(x,totaisBase,largura,35);
+   // Quadro de totais: três faixas independentes para evitar sobreposição.
+   // A primeira contém os títulos (15 pt), a segunda os valores (20 pt)
+   // e a última o líquido a receber (17 pt), mantendo as duas vias em A4.
+   const totaisBase=topo-323;
+   const separadorTitulos=eventosBase-15;
+   const separadorLiquido=eventosBase-35;
+   retangulo(x,totaisBase,largura,eventosBase-totaisBase);
    vertical(coluna[3],totaisBase,eventosBase);
-   vertical(coluna[4],totaisBase,eventosBase);
-   horizontal(coluna[3],eventosBase-17,x+largura);
+   // A divisão entre vencimentos e descontos termina antes da faixa do líquido.
+   vertical(coluna[4],separadorLiquido,eventosBase);
+   horizontal(coluna[3],separadorTitulos,x+largura);
+   horizontal(coluna[3],separadorLiquido,x+largura);
    desenharTexto('Total dos Vencimentos',coluna[3]+2,eventosBase-10,5.3,regular,coluna[4]-coluna[3]-4,'centro');
    desenharTexto('Total dos Descontos',coluna[4]+1,eventosBase-10,5.3,regular,coluna[5]-coluna[4]-3,'centro');
-   desenharTexto(dinheiro(memoria.total_proventos),coluna[3]+1,eventosBase-29,8.4,regular,coluna[4]-coluna[3]-3,'direita');
-   desenharTexto(dinheiro(memoria.total_descontos),coluna[4]+1,eventosBase-29,8.4,regular,coluna[5]-coluna[4]-3,'direita');
-   desenharTexto('Líquido a Receber->',coluna[3]+2,totaisBase+5,6,negrito,coluna[4]-coluna[3]-4,'direita');
+   desenharTexto(dinheiro(memoria.total_proventos),coluna[3]+1,eventosBase-28,8.4,regular,coluna[4]-coluna[3]-3,'direita');
+   desenharTexto(dinheiro(memoria.total_descontos),coluna[4]+1,eventosBase-28,8.4,regular,coluna[5]-coluna[4]-3,'direita');
+   desenharTexto('Líquido a Receber',coluna[3]+4,totaisBase+5,7,negrito,105,'esquerda');
    desenharTexto(dinheiro(memoria.liquido),coluna[4]+1,totaisBase+5,9,negrito,coluna[5]-coluna[4]-3,'direita');
-   const base=topo-325;
+   const base=topo-342;
    retangulo(x,base,largura,19);
    const medidas=[
      ['Salário Base',memoria.funcionario.salario_base],['Base Cálc. INSS',memoria.base_inss],
