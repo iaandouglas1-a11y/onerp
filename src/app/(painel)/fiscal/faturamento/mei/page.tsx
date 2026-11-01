@@ -1,3 +1,4 @@
+import { EntradaCompetencia } from '@/componentes/globais/competencia';
 import Link from 'next/link';
 import { CabecalhoPagina, Cartao, Campo, Indicador, ListaVazia } from '@/componentes/globais/elementos';
 import { exigirEscritorio } from '@/lib/seguranca/contexto';
@@ -9,12 +10,12 @@ import { JanelaModal } from '@/componentes/globais/janela-modal';
 import { FormularioContinuo } from '@/componentes/globais/formulario-continuo';
 import { ModalMovimento } from '@/modulos/fiscal/componentes/modal-movimento';
 import { AcoesMovimento } from '@/modulos/fiscal/componentes/acoes-movimento';
-import { dataBrasileira, moeda, mesAtual } from '@/lib/utilitarios/formatacao';
+import { dataBrasileira, moeda, mesValido } from '@/lib/utilitarios/formatacao';
 export default async function FaturamentoMei({searchParams}:{searchParams:Promise<{cliente?:string;competencia?:string;novo?:string;editar?:string;ajustar?:string}>}){
   const filtros=await searchParams;const {banco,escritorioId}=await exigirEscritorio();
   const {clientes}=await resumoFaturamento(filtros.competencia);
   const meis=clientes.filter(item=>item.regime_tributario==='MEI');const cliente=meis.find(item=>item.id===filtros.cliente)??meis[0];
-  const mes=/^\d{4}-(0[1-9]|1[0-2])$/.test(filtros.competencia??'')?filtros.competencia!:mesAtual();const ano=Number(mes.slice(0,4));
+  const mes=mesValido(filtros.competencia);const ano=Number(mes.slice(0,4));
   if(!cliente)return <><CabecalhoPagina titulo="Faturamento MEI" descricao="Acompanhamento do limite por empresa e ano-calendário."/><Cartao titulo="Nenhum cliente MEI"><ListaVazia texto="Cadastre um cliente com regime tributário MEI para começar."/></Cartao></>;
   const [movimentos,ajustes,{data:regra,error:erroRegra}]=await Promise.all([
     consultarTodasPaginas<{id:string;cliente_id:string;tipo_movimento:string;valor:number;competencia:string;atividade_receita:string|null;origem:string;data_movimento:string;numero_documento:string|null;descricao:string|null}>((inicio,fim)=>banco.from('movimentacoes_fiscais')
@@ -32,13 +33,13 @@ export default async function FaturamentoMei({searchParams}:{searchParams:Promis
   const mesReceitas=totalizarReceitas(itens.filter(item=>item.competencia===`${mes}-01`),ajustesValidos.filter(item=>item.competencia===`${mes}-01`));
   const limite=regra?limiteEfetivoMei({ano_calendario:ano,limite_anual:Number(regra.limite_anual),percentual_alerta:Number(regra.percentual_alerta),proporcional_ano_abertura:regra.proporcional_ano_abertura},cliente.data_abertura):null;
   const status=limite!==null?situacaoLimite(receitas.total,limite,Number(regra?.percentual_alerta??0.8)):null;
-  const meses=Array.from({length:12},(_,indice)=>{const numero=String(indice+1).padStart(2,'0');const periodo=`${ano}-${numero}-01`;return {periodo,mes:new Date(`${ano}-${numero}-01T12:00:00Z`).toLocaleDateString('pt-BR',{month:'short',timeZone:'UTC'}),...totalizarReceitas(itens.filter(item=>item.competencia===periodo),ajustesValidos.filter(item=>item.competencia===periodo))};});
+  const meses=Array.from({length:12},(_,indice)=>{const numero=String(indice+1).padStart(2,'0');const periodo=`${ano}-${numero}-01`;return {periodo,mes:`${numero}/${ano}`,...totalizarReceitas(itens.filter(item=>item.competencia===periodo),ajustesValidos.filter(item=>item.competencia===periodo))};});
   const operacaoHabilitada=true; // Vínculo ativo ao escritório já foi validado.
   const podeEditar=true; // A autenticação e o vínculo ativo são exigidos no servidor.
   const base=`/fiscal/faturamento/mei?cliente=${cliente.id}&competencia=${mes}`;
   const receitasAno=itens.filter(item=>item.tipo_movimento==='RECEITA').sort((a,b)=>b.data_movimento.localeCompare(a.data_movimento));
   return <><CabecalhoPagina titulo="Faturamento MEI" descricao="Acompanhamento de receitas e limites legalmente parametrizados." acao={podeEditar?"Lançar receita":undefined} rotaAcao={`${base}&novo=1`}/>
-    <form className="filtros" action="/fiscal/faturamento/mei"><div className="campo" style={{minWidth:300}}><label>Cliente MEI</label><select name="cliente" defaultValue={cliente.id}>{meis.map(item=><option key={item.id} value={item.id}>{item.razao_social}</option>)}</select></div><div className="campo"><label>Competência</label><input type="month" name="competencia" defaultValue={mes}/></div><button className="botao" type="submit">Consultar</button><Link href="/configuracoes" className="botao">Parâmetros</Link><Link href={`/fiscal/faturamento/exportar?tipo=mei&competencia=${mes}&cliente=${cliente.id}`} className="botao">Exportar PDF</Link><a className="botao" href="#receitas-cadastradas">Gerenciar receitas ({receitasAno.length})</a></form>
+    <form className="filtros" action="/fiscal/faturamento/mei"><div className="campo" style={{minWidth:300}}><label>Cliente MEI</label><select name="cliente" defaultValue={cliente.id}>{meis.map(item=><option key={item.id} value={item.id}>{item.razao_social}</option>)}</select></div><div className="campo"><label htmlFor="competencia-mei">Competência</label><EntradaCompetencia nome="competencia" id="competencia-mei" padrao={mes} obrigatorio/></div><button className="botao" type="submit">Consultar</button><Link href="/configuracoes" className="botao">Parâmetros</Link><Link href={`/fiscal/faturamento/exportar?tipo=mei&competencia=${mes}&cliente=${cliente.id}`} className="botao">Exportar PDF</Link><a className="botao" href="#receitas-cadastradas">Gerenciar receitas ({receitasAno.length})</a></form>
     {!regra&&<div className="aviso-configuracao">Nenhum limite MEI aprovado para {ano}. Configure o valor anual e o fundamento legal em Configurações. Sem isso, o sistema não classificará o cliente como dentro ou fora do limite.</div>}
     <div className="grade colunas-4" style={{marginBottom:15}}><Indicador legenda="Receita do mês (com ajustes)" valor={moeda(mesReceitas.total)}/><Indicador legenda="Acumulado no ano" valor={moeda(receitas.total)}/><Indicador legenda="Limite efetivo do ano" valor={limite===null?'Não configurado':moeda(limite)}/><Indicador legenda="Percentual utilizado" valor={status?`${(status.percentual*100).toFixed(1).replace('.',',')}%`:'—'} detalhe={status?.situacao??'Aguardando parametrização'}/></div>
     <section id="receitas-cadastradas" style={{marginBottom:15}} aria-label="Gerenciamento de receitas MEI">

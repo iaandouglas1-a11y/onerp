@@ -42,3 +42,14 @@
 #receitas-cadastradas{scroll-margin-top:28px}
 .tabela-gerenciamento th:first-child,.tabela-gerenciamento td:first-child{min-width:174px}
 @media(max-width:800px){.tabela-gerenciamento{min-width:790px}}
+
+
+/* v0.5.3 — largura ajustável do menu e competência em MM/AAAA */
+.lateral{position:sticky;isolation:isolate;overflow:hidden}
+.lateral>nav{flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#344259 transparent}
+.redimensionador-lateral{position:absolute;z-index:12;top:0;right:0;bottom:0;width:10px;cursor:col-resize;touch-action:none;user-select:none;outline:none}
+.redimensionador-lateral::after{content:'';position:absolute;top:0;right:3px;bottom:0;width:2px;background:rgba(124,185,60,.38);opacity:0;transition:opacity .15s}
+.redimensionador-lateral:hover::after,.redimensionador-lateral:focus-visible::after,.redimensionador-lateral:active::after{opacity:1}
+.redimensionador-lateral:focus-visible{outline:2px solid var(--verde);outline-offset:-2px}
+.entrada-competencia{font-variant-numeric:tabular-nums;max-width:160px;letter-spacing:.015em}
+@media(max-width:800px){.redimensionador-lateral{display:none}}
