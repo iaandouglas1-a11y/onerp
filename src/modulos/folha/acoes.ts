@@ -1,0 +1,150 @@
+'use server';
+import { revalidatePath } from 'next/cache';
+import { exigirEdicao } from '@/lib/seguranca/contexto';
+import { digitos, limparTexto, textoObrigatorio, valorMonetarioBr } from '@/lib/utilitarios/formatacao';
+import { conferirErro } from '@/lib/utilitarios/erros';
+import { calcularContracheque, type EventoCalculado, type ParametrosFolha } from './calculos';
+
+function ler(dados:FormData,campo:string){return limparTexto(dados.get(campo));}
+function uuid(valor:string){if(!/^[a-f\d]{8}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{4}-[a-f\d]{12}$/i.test(valor))throw new Error('Identificador inválido.');return valor;}
+function validarCompetencia(valor:string){if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(valor))throw new Error('Competência inválida.');return valor+'-01';}
+function cpfValido(valor:string){
+ const cpf=digitos(valor);if(!/^\d{11}$/.test(cpf)||/^(\d)\1{10}$/.test(cpf))return false;
+ for(let pos=9;pos<11;pos++){let soma=0;for(let i=0;i<pos;i++)soma+=Number(cpf[i])*(pos+1-i);
+ const digito=(soma*10)%11%10;if(digito!==Number(cpf[pos]))return false;}return true;
+}
+export async function salvarEmpregado(dados:FormData){
+ const {banco,escritorioId}=await exigirEdicao();
+ const clienteId=uuid(textoObrigatorio(dados.get('cliente_id'),'Cliente'));
+ const id=ler(dados,'id');if(id)uuid(id);
+ const {data:cliente,error:erroCliente}=await banco.from('clientes').select('id').eq('id',clienteId).eq('escritorio_id',escritorioId).maybeSingle();
+ conferirErro(erroCliente,'Consultar cliente');if(!cliente)throw new Error('Cliente não pertence ao escritório.');
+ const cpf=digitos(ler(dados,'cpf'));if(!cpfValido(cpf))throw new Error('CPF inválido.');
+ const salario=valorMonetarioBr(ler(dados,'salario'));if(salario<=0)throw new Error('Salário deve ser maior que zero.');
+ const admissao=textoObrigatorio(dados.get('data_admissao'),'Admissão');
+ const desligamento=ler(dados,'data_desligamento')||null;
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(admissao)||desligamento&&!/^\d{4}-\d{2}-\d{2}$/.test(desligamento)||desligamento&&desligamento<admissao)throw new Error('Datas contratuais inválidas.');
+ const situacao=ler(dados,'situacao')||'ATIVO';
+ if(!['ATIVO','AFASTADO','DESLIGADO'].includes(situacao))throw new Error('Situação não permitida.');
+ if(situacao==='DESLIGADO'&&!desligamento)throw new Error('Informe a data de desligamento.');
+ if(situacao!=='DESLIGADO'&&desligamento)throw new Error('Remova a data de desligamento ou altere a situação para desligado.');
+ const dependentes=Number(ler(dados,'dependentes_irrf')||'0');if(!Number.isInteger(dependentes)||dependentes<0||dependentes>99)throw new Error('Dependentes inválidos.');
+ const nascimento=ler(dados,'data_nascimento')||null;
+ const registro={nome_completo:textoObrigatorio(dados.get('nome_completo'),'Nome'),cpf,cliente_id:clienteId,
+  codigo_funcionario:ler(dados,'codigo_funcionario')||null,cargo:ler(dados,'cargo')||null,cbo:ler(dados,'cbo')||null,
+  salario,data_admissao:admissao,data_desligamento:desligamento,jornada_trabalho:ler(dados,'jornada_trabalho')||null,
+  situacao,data_nascimento:nascimento,dependentes_irrf:dependentes,observacoes:ler(dados,'observacoes')||null};
+ if(id){
+  const {data:anterior,error:erroAnterior}=await banco.from('empregados').select('*').eq('escritorio_id',escritorioId).eq('id',id).eq('cliente_id',clienteId).maybeSingle();
+  conferirErro(erroAnterior);if(!anterior)throw new Error('Empregado não localizado neste cliente.');
+  const {error:erro}=await banco.from('empregados').update(registro).eq('id',id).eq('cliente_id',clienteId).eq('escritorio_id',escritorioId);
+  conferirErro(erro,'Atualizar empregado');
+  const historicoAnterior={cargo:anterior.cargo,salario:anterior.salario,jornada_trabalho:anterior.jornada_trabalho,situacao:anterior.situacao,data_admissao:anterior.data_admissao,data_desligamento:anterior.data_desligamento};
+  const historicoNovo={cargo:registro.cargo,salario:registro.salario,jornada_trabalho:registro.jornada_trabalho,situacao:registro.situacao,data_admissao:registro.data_admissao,data_desligamento:registro.data_desligamento};
+  const {error:erroHistorico}=await banco.from('alteracoes_contratuais_empregados').insert({escritorio_id:escritorioId,empregado_id:id,data_vigencia:new Date().toISOString().slice(0,10),valores_anteriores:historicoAnterior,valores_novos:historicoNovo,justificativa:'Atualização de cadastro no ERP'});
+  conferirErro(erroHistorico,'Registrar histórico contratual');
+ }else{
+  const {error:erro}=await banco.from('empregados').insert({escritorio_id:escritorioId,...registro});
+  conferirErro(erro,'Cadastrar empregado');
+ }
+ revalidatePath('/folha/empregados');return {sucesso:true,mensagem:id?'Empregado atualizado.':'Empregado cadastrado. Inclua outro se desejar.'};
+}
+export async function salvarEvento(dados:FormData){
+ const {banco,escritorioId}=await exigirEdicao();
+ const id=ler(dados,'id');if(id)uuid(id);
+ const codigo=textoObrigatorio(dados.get('codigo'),'Código',20).toUpperCase();
+ if(['1000','9201','9202','9203'].includes(codigo))throw new Error('Código reservado aos cálculos automáticos.');
+ const tipo=ler(dados,'tipo_evento');if(!['PROVENTO','DESCONTO','INFORMATIVO'].includes(tipo))throw new Error('Tipo de evento inválido.');
+ const booleano=(nome:string)=>ler(dados,nome)==='sim';
+ const cfg={incide_inss:tipo!=='INFORMATIVO'&&booleano('incide_inss'),incide_fgts:tipo!=='INFORMATIVO'&&booleano('incide_fgts'),
+ incide_irrf:tipo!=='INFORMATIVO'&&booleano('incide_irrf'),reduz_base:tipo==='DESCONTO'&&booleano('reduz_base'),calculo:'VALOR_INFORMADO'};
+ const registro={codigo,nome:textoObrigatorio(dados.get('nome'),'Descrição'),tipo_evento:tipo,configuracao_calculo:cfg,ativo:ler(dados,'ativo')!=='nao'};
+ if(id){const {error:erro}=await banco.from('eventos_folha').update(registro).eq('id',id).eq('escritorio_id',escritorioId);conferirErro(erro,'Editar evento');}
+ else {const {error:erro}=await banco.from('eventos_folha').insert({escritorio_id:escritorioId,...registro});conferirErro(erro,'Cadastrar evento');}
+ revalidatePath('/folha/eventos');return {sucesso:true,mensagem:'Evento salvo. Revise as incidências antes de utilizá-lo.'};
+}
+export async function salvarLancamentoEvento(dados:FormData){
+ const {banco,escritorioId,usuario}=await exigirEdicao();
+ const empregadoId=uuid(textoObrigatorio(dados.get('empregado_id'),'Empregado'));
+ const eventoId=uuid(textoObrigatorio(dados.get('evento_id'),'Evento'));
+ const competencia=validarCompetencia(textoObrigatorio(dados.get('competencia'),'Competência'));
+ const id=ler(dados,'id');if(id)uuid(id);
+ const valor=valorMonetarioBr(ler(dados,'valor'));if(valor<0)throw new Error('Valor não pode ser negativo.');
+ const {data:empregado}=await banco.from('empregados').select('id,cliente_id').eq('escritorio_id',escritorioId).eq('id',empregadoId).maybeSingle();
+ if(!empregado)throw new Error('Empregado não encontrado.');
+ const {data:evento}=await banco.from('eventos_folha').select('id,ativo').eq('escritorio_id',escritorioId).eq('id',eventoId).maybeSingle();
+ if(!evento?.ativo)throw new Error('Evento indisponível.');
+ const {data:fechado}=await banco.from('contracheques_folha').select('id').eq('escritorio_id',escritorioId).eq('empregado_id',empregadoId).eq('competencia',competencia).eq('situacao','CONFERIDO').maybeSingle();
+ if(fechado)throw new Error('Contracheque já conferido. Reabertura exige rotina específica.');
+ const registro={empregado_id:empregadoId,evento_id:eventoId,cliente_id:empregado.cliente_id,competencia,valor,referencia:ler(dados,'referencia')||null,observacao:ler(dados,'observacao')||null};
+ if(id){const {error:erro}=await banco.from('lancamentos_eventos_folha').update(registro).eq('id',id).eq('escritorio_id',escritorioId);conferirErro(erro,'Editar lançamento');}
+ else {const {error:erro}=await banco.from('lancamentos_eventos_folha').insert({escritorio_id:escritorioId,criado_por:usuario.id,...registro});conferirErro(erro,'Lançar evento');}
+ revalidatePath('/folha/lancamentos');return {sucesso:true,mensagem:'Evento lançado. É possível incluir outro sem fechar a janela.'};
+}
+export async function excluirLancamentoEvento(dados:FormData):Promise<void>{
+ const {banco,escritorioId}=await exigirEdicao();const id=uuid(textoObrigatorio(dados.get('id'),'Lançamento'));
+ const {data:registro}=await banco.from('lancamentos_eventos_folha').select('empregado_id,competencia').eq('id',id).eq('escritorio_id',escritorioId).maybeSingle();
+ if(!registro)throw new Error('Registro não localizado.');
+ const {data:fechado}=await banco.from('contracheques_folha').select('id').eq('escritorio_id',escritorioId).eq('empregado_id',registro.empregado_id).eq('competencia',registro.competencia).eq('situacao','CONFERIDO').maybeSingle();
+ if(fechado)throw new Error('Não é permitido alterar um contracheque conferido.');
+ const {error:erro}=await banco.from('lancamentos_eventos_folha').delete().eq('escritorio_id',escritorioId).eq('id',id);
+ conferirErro(erro,'Excluir lançamento');revalidatePath('/folha/lancamentos');
+}
+export async function aprovarRegrasFolha(dados:FormData){
+ const {banco,escritorioId,usuario}=await exigirEdicao();
+ const ano=Number(ler(dados,'ano'));if(ano!==2026)throw new Error('Somente as tabelas de 2026 estão previamente configuradas.');
+ const {data:regras,error:erro}=await banco.from('versoes_regras_folha').select('id,tipo_regra,inicio_vigencia,fim_vigencia,aprovado_em').eq('escritorio_id',escritorioId).eq('inicio_vigencia','2026-01-01');
+ conferirErro(erro);if(!regras||!['INSS','IRRF','FGTS'].every(tipo=>regras.some(r=>r.tipo_regra===tipo)))throw new Error('Execute a migração 004 para carregar as tabelas de 2026.');
+ for(const regra of regras.filter(r=>['INSS','IRRF','FGTS'].includes(r.tipo_regra)&&!r.aprovado_em)){
+  const {error:falha}=await banco.from('versoes_regras_folha').update({aprovado_em:new Date().toISOString(),aprovado_por:usuario.id}).eq('id',regra.id).eq('escritorio_id',escritorioId);
+  conferirErro(falha,'Aprovar tabela');
+ }
+ revalidatePath('/folha/contracheques');return {sucesso:true,mensagem:'Tabelas 2026 aprovadas para cálculo da folha mensal básica.'};
+}
+export async function gerarContracheque(dados:FormData){
+ const {banco,escritorioId,usuario}=await exigirEdicao();
+ const empregadoId=uuid(textoObrigatorio(dados.get('empregado_id'),'Empregado'));
+ const competenciaTexto=textoObrigatorio(dados.get('competencia'),'Competência');const competencia=validarCompetencia(competenciaTexto);
+ const {data:empregado,error:erroEmpregado}=await banco.from('empregados').select('*').eq('id',empregadoId).eq('escritorio_id',escritorioId).maybeSingle();
+ conferirErro(erroEmpregado);if(!empregado)throw new Error('Funcionário não encontrado.');
+ if(empregado.situacao!=='ATIVO')throw new Error('Cálculo automático está restrito a empregados ativos, sem afastamento ou desligamento.');
+ if(empregado.data_admissao>competencia)throw new Error('Admissão após o início do mês: o cálculo proporcional não está implantado.');
+ const {data:existente}=await banco.from('contracheques_folha').select('id,situacao').eq('escritorio_id',escritorioId).eq('empregado_id',empregadoId).eq('competencia',competencia).maybeSingle();
+ if(existente?.situacao==='CONFERIDO')throw new Error('Este contracheque já foi conferido e não pode ser substituído.');
+ const {data:cliente,error:erroCliente}=await banco.from('clientes').select('id,razao_social,cpf_cnpj').eq('id',empregado.cliente_id).eq('escritorio_id',escritorioId).maybeSingle();
+ conferirErro(erroCliente);if(!cliente)throw new Error('Empresa não localizada.');
+ const {data:endereco}=await banco.from('enderecos_clientes').select('cidade,uf').eq('escritorio_id',escritorioId).eq('cliente_id',cliente.id).order('principal',{ascending:false}).limit(1).maybeSingle();
+ const {data:regras,error:erroRegra}=await banco.from('versoes_regras_folha').select('id,tipo_regra,inicio_vigencia,fim_vigencia,parametros,fundamento_legal,aprovado_em').eq('escritorio_id',escritorioId).lte('inicio_vigencia',competencia).not('aprovado_em','is',null);
+ conferirErro(erroRegra);
+ const para=(tipo:string)=>regras?.filter(r=>r.tipo_regra===tipo&&(!r.fim_vigencia||r.fim_vigencia>=competencia)).sort((a,b)=>b.inicio_vigencia.localeCompare(a.inicio_vigencia))[0];
+ const regraInss=para('INSS'),regraIrrf=para('IRRF'),regraFgts=para('FGTS');
+ if(!regraInss||!regraIrrf||!regraFgts)throw new Error('Tabelas INSS, IRRF e FGTS não aprovadas para a competência. Acesse Parâmetros da folha.');
+ const {data:lancamentos,error:erroLancamentos}=await banco.from('lancamentos_eventos_folha').select('*').eq('escritorio_id',escritorioId).eq('empregado_id',empregadoId).eq('competencia',competencia).order('criado_em',{ascending:true});
+ conferirErro(erroLancamentos);
+ const ids=[...new Set((lancamentos??[]).map(l=>l.evento_id))];
+ const {data:eventosBase,error:erroEventos}=ids.length?await banco.from('eventos_folha').select('*').eq('escritorio_id',escritorioId).in('id',ids):{data:[],error:null};
+ conferirErro(erroEventos);
+ const eventos:EventoCalculado[]=(lancamentos??[]).map(l=>{
+  const evento=eventosBase?.find(e=>e.id===l.evento_id);if(!evento)throw new Error('Evento cadastrado não localizado.');
+  const cfg=evento.configuracao_calculo as Record<string,unknown>;
+  if(cfg.calculo!=='VALOR_INFORMADO')throw new Error(`Tipo de cálculo não suportado: ${evento.codigo}.`);
+  return {codigo:evento.codigo,descricao:evento.nome,referencia:l.referencia||'',tipo:evento.tipo_evento,valor:Number(l.valor),
+  incide_inss:cfg.incide_inss===true,incide_irrf:cfg.incide_irrf===true,incide_fgts:cfg.incide_fgts===true,reduz_base:cfg.reduz_base===true};
+ });
+ const parametros:ParametrosFolha={inss:regraInss.parametros,irrf:regraIrrf.parametros,fgts:regraFgts.parametros,
+ referencias:{INSS:regraInss.id,IRRF:regraIrrf.id,FGTS:regraFgts.id}};
+ const memoria=calcularContracheque({competencia:competenciaTexto,
+  empresa:{nome:cliente.razao_social,cidade:endereco?.cidade?[endereco.cidade,endereco.uf].filter(Boolean).join(' - '):'',cnpj:cliente.cpf_cnpj},
+  funcionario:{nome:empregado.nome_completo,codigo:empregado.codigo_funcionario||'0001',cpf:empregado.cpf||'',cbo:empregado.cbo||'',cargo:empregado.cargo||'',salario_base:Number(empregado.salario)},
+  dependentes_irrf:Number(empregado.dependentes_irrf||0),eventos,parametros});
+ const registro={escritorio_id:escritorioId,cliente_id:cliente.id,empregado_id:empregadoId,competencia,
+  situacao:'EM_CONFERENCIA',memoria_calculo:memoria,gerado_por:usuario.id,gerado_em:new Date().toISOString()};
+ if(existente){const {error:erro}=await banco.from('contracheques_folha').update(registro).eq('id',existente.id).eq('escritorio_id',escritorioId);conferirErro(erro,'Atualizar contracheque');}
+ else {const {error:erro}=await banco.from('contracheques_folha').insert(registro);conferirErro(erro,'Gerar contracheque');}
+ revalidatePath('/folha/contracheques');return {sucesso:true,mensagem:'Contracheque calculado. Confira valores e abra o PDF na lista.'};
+}
+export async function confirmarContracheque(dados:FormData):Promise<void>{
+ const {banco,escritorioId}=await exigirEdicao();const id=uuid(textoObrigatorio(dados.get('id'),'Contracheque'));
+ const {error:erro}=await banco.from('contracheques_folha').update({situacao:'CONFERIDO'}).eq('id',id).eq('escritorio_id',escritorioId).eq('situacao','EM_CONFERENCIA');
+ conferirErro(erro,'Conferir contracheque');revalidatePath('/folha/contracheques');
+}

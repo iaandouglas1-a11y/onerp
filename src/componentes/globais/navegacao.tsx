@@ -23,7 +23,7 @@ const modulos:ModuloMenu[]=[
     {titulo:'Documentos fiscais'}, {titulo:'DAS MEI'}, {titulo:'DASN-SIMEI'},
   ]},
   {chave:'contabil',titulo:'Contábil',icone:BookOpen,funcoes:[{titulo:'Plano de contas'},{titulo:'Lançamentos'},{titulo:'Conciliação bancária'},{titulo:'Demonstrativos'}]},
-  {chave:'folha',titulo:'Folha de pagamento',icone:UsersRound,funcoes:[{titulo:'Empregados'},{titulo:'Eventos'},{titulo:'Processamento'},{titulo:'Férias'}]},
+  {chave:'folha',titulo:'Folha de pagamento',icone:UsersRound,funcoes:[{titulo:'Empregados',rota:'/folha/empregados'},{titulo:'Eventos',rota:'/folha/eventos'},{titulo:'Lançamentos',rota:'/folha/lancamentos'},{titulo:'Contracheques',rota:'/folha/contracheques'},{titulo:'Férias'}]},
   {chave:'financeiro',titulo:'Financeiro',icone:Wallet,funcoes:[{titulo:'Honorários'},{titulo:'Recebimentos'},{titulo:'Fluxo de caixa'},{titulo:'Relatórios'}]},
 ];
 const LARGURA_PADRAO=234;
