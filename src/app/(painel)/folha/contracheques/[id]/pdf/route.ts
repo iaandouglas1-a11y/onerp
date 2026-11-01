@@ -6,9 +6,10 @@ export async function GET(_requisicao:Request,{params}:{params:Promise<{id:strin
  const {id}=await params;
  if(!/^[0-9a-f-]{36}$/i.test(id))return new Response('Identificador inválido.',{status:400});
  const {banco,escritorioId}=await exigirEscritorio();
- const {data,error:erro}=await banco.from('contracheques_folha').select('id,memoria_calculo').eq('escritorio_id',escritorioId).eq('id',id).maybeSingle();
+ const {data,error:erro}=await banco.from('contracheques_folha').select('id,situacao,memoria_calculo').eq('escritorio_id',escritorioId).eq('id',id).maybeSingle();
  if(erro)return new Response('Não foi possível consultar o contracheque.',{status:500});
  if(!data)return new Response('Contracheque não localizado.',{status:404});
+ if(data.situacao==='REPROCESSAMENTO_PENDENTE')return new Response('Contracheque desatualizado: reprocessar a folha da empresa.',{status:409});
  const memoria=data.memoria_calculo as MemoriaContracheque;
  if(memoria?.versao!=='1')return new Response('Versão do contracheque desconhecida.',{status:422});
  const pdf=await gerarPdfContracheque(memoria);

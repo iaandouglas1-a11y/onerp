@@ -11,7 +11,7 @@ export type EventoFolha = {id:string;codigo:string;nome:string;tipo_evento:'PROV
 export type LancamentoFolha = {id:string;empregado_id:string;evento_id:string;cliente_id:string;competencia:string;
  referencia:string|null;valor:number;observacao:string|null};
 export type ContrachequeFolha = {id:string;empregado_id:string;cliente_id:string;competencia:string;
- situacao:string;gerado_em:string;memoria_calculo:Record<string,unknown>};
+ situacao:'EM_CONFERENCIA'|'CONFERIDO'|'REPROCESSAMENTO_PENDENTE';gerado_em:string;memoria_calculo:Record<string,unknown>};
 
 export async function listarEmpregados(){
  const {banco,escritorioId}=await exigirEscritorio();
