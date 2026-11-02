@@ -316,3 +316,17 @@
   .grade.colunas-4 > .indicador { padding:10px 9px; }
   .indicador .valor { font-size:19px; }
 }
+
+
+/* Hierarquia aprovada: módulos > títulos de grupo > funcionalidades. */
+.submenu{padding:3px 0 9px 28px;gap:0}
+.submenu-grupo{display:flex;flex-direction:column;gap:2px;padding:7px 0 6px 0;border-bottom:1px solid rgba(154,165,180,.13)}
+.submenu-grupo:last-child{border-bottom:0}
+.submenu-titulo{padding:8px 10px 5px;color:#91A0B0;font-size:10px;font-weight:550;letter-spacing:.075em;line-height:1.35;text-transform:uppercase;overflow-wrap:anywhere}
+.submenu .subitem-menu{font-size:12px;line-height:1.35;padding:7px 10px;min-height:31px}
+.submenu .subitem-menu.ativo{color:#B8E691;background:#203128;border-left:2px solid #7CB93C;padding-left:8px}
+@media(max-width:800px){
+  .gaveta-menu-movel .submenu{padding-left:20px}
+  .gaveta-menu-movel .submenu-titulo{font-size:10px;padding-top:11px}
+  .gaveta-menu-movel .submenu .subitem-menu{min-height:40px;font-size:13px}
+}

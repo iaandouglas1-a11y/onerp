@@ -6,25 +6,51 @@ import { LayoutDashboard, Building2, ReceiptText, BookOpen, UsersRound, Wallet, 
 import { criarClienteNavegador } from '@/lib/supabase/navegador';
 
 type IconeMenu=ComponentType<{size?:number;strokeWidth?:number}>;
-type FuncaoMenu={titulo:string;rota?:string};
-type ModuloMenu={chave:string;titulo:string;icone:IconeMenu;funcoes:FuncaoMenu[]};
+type FuncaoMenu={titulo:string;rota?:string;destacar?:boolean};
+type GrupoFuncoes={titulo:string;funcoes:FuncaoMenu[]};
+type ModuloMenu={chave:string;titulo:string;icone:IconeMenu;grupos:GrupoFuncoes[]};
+// Menu de navegação: as funcionalidades sem rota permanecem identificadas como futuras.
+// Nenhuma rota ou regra operacional é criada por esta organização visual.
 const modulos:ModuloMenu[]=[
-  {chave:'societario',titulo:'Societário',icone:Building2,funcoes:[
-    {titulo:'Clientes',rota:'/societario/clientes'}, {titulo:'Serviços',rota:'/societario/servicos'},
-    {titulo:'Tarefas',rota:'/societario/tarefas'}, {titulo:'Obrigações',rota:'/societario/obrigacoes'},
-    {titulo:'Documentos',rota:'/societario/documentos'}, {titulo:'Acessos',rota:'/societario/acessos'},
-    {titulo:'Relatórios societários'},
+  {chave:'societario',titulo:'Societário',icone:Building2,grupos:[
+    {titulo:'Visão geral',funcoes:[{titulo:'Painel societário'}]},
+    {titulo:'Gestão de clientes',funcoes:[{titulo:'Clientes',rota:'/societario/clientes'},{titulo:'Contatos e representantes'},{titulo:'Serviços contratados'}]},
+    {titulo:'Gestão operacional',funcoes:[{titulo:'Obrigações',rota:'/societario/obrigacoes'},{titulo:'Tarefas',rota:'/societario/tarefas'},{titulo:'Implantação de clientes'}]},
+    {titulo:'Documentação',funcoes:[{titulo:'Documentos e contratos',rota:'/societario/documentos'},{titulo:'Acessos e credenciais',rota:'/societario/acessos'}]},
+    {titulo:'Configurações',funcoes:[{titulo:'Catálogo de serviços',rota:'/societario/servicos'}]},
   ]},
-  {chave:'fiscal',titulo:'Fiscal',icone:ReceiptText,funcoes:[
-    {titulo:'Visão geral',rota:'/fiscal/faturamento'},
-    {titulo:'Faturamento MEI',rota:'/fiscal/faturamento/mei'},
-    {titulo:'Faturamento convencional',rota:'/fiscal/faturamento/convencional'},
-    {titulo:'Categorias',rota:'/fiscal/categorias'},
-    {titulo:'Documentos fiscais',rota:'/fiscal/documentos'}, {titulo:'DAS MEI',rota:'/fiscal/das-mei'}, {titulo:'DASN-SIMEI',rota:'/fiscal/dasn-simei'},
+  {chave:'fiscal',titulo:'Fiscal',icone:ReceiptText,grupos:[
+    {titulo:'Visão geral',funcoes:[{titulo:'Painel fiscal',rota:'/fiscal',destacar:false}]},
+    {titulo:'Documentos fiscais',funcoes:[{titulo:'Consultar documentos',rota:'/fiscal/documentos'},{titulo:'Importar documentos',rota:'/fiscal/documentos?novo=1',destacar:false},{titulo:'Conferência e classificação'}]},
+    {titulo:'Faturamento',funcoes:[{titulo:'Faturamento geral',rota:'/fiscal/faturamento'},{titulo:'Faturamento MEI',rota:'/fiscal/faturamento/mei'},{titulo:'Faturamento convencional',rota:'/fiscal/faturamento/convencional'}]},
+    {titulo:'Obrigações',funcoes:[{titulo:'DAS MEI',rota:'/fiscal/das-mei'},{titulo:'DASN-SIMEI',rota:'/fiscal/dasn-simei'}]},
+    {titulo:'Configurações',funcoes:[{titulo:'Categorias fiscais',rota:'/fiscal/categorias'},{titulo:'Regras de classificação'}]},
   ]},
-  {chave:'contabil',titulo:'Contábil',icone:BookOpen,funcoes:[{titulo:'Plano de contas'},{titulo:'Lançamentos'},{titulo:'Conciliação bancária'},{titulo:'Demonstrativos'}]},
-  {chave:'folha',titulo:'Folha de pagamento',icone:UsersRound,funcoes:[{titulo:'Empregados',rota:'/folha/empregados'},{titulo:'Eventos',rota:'/folha/eventos'},{titulo:'Lançamentos',rota:'/folha/lancamentos'},{titulo:'Contracheques',rota:'/folha/contracheques'},{titulo:'Férias'}]},
-  {chave:'financeiro',titulo:'Financeiro',icone:Wallet,funcoes:[{titulo:'Painel financeiro',rota:'/financeiro'},{titulo:'Honorários',rota:'/financeiro/honorarios'},{titulo:'Contas a receber',rota:'/financeiro/recebimentos'},{titulo:'Contas a pagar',rota:'/financeiro/despesas'},{titulo:'Movimentações',rota:'/financeiro/movimentacoes'},{titulo:'Contas e categorias',rota:'/financeiro/contas'},{titulo:'Fluxo de caixa',rota:'/financeiro/fluxo-de-caixa'},{titulo:'Relatórios',rota:'/financeiro/relatorios'}]},
+  {chave:'contabil',titulo:'Contábil',icone:BookOpen,grupos:[
+    {titulo:'Visão geral',funcoes:[{titulo:'Painel contábil'}]},
+    {titulo:'Estrutura contábil',funcoes:[{titulo:'Plano de contas'},{titulo:'Históricos padrão'}]},
+    {titulo:'Escrituração',funcoes:[{titulo:'Lançamentos contábeis'},{titulo:'Importação de lançamentos'}]},
+    {titulo:'Conciliação',funcoes:[{titulo:'Extratos bancários'},{titulo:'Conciliação bancária'}]},
+    {titulo:'Demonstrativos',funcoes:[{titulo:'Balancete'},{titulo:'Razão'},{titulo:'Diário'},{titulo:'Balanço Patrimonial'},{titulo:'DRE'}]},
+    {titulo:'Encerramento',funcoes:[{titulo:'Períodos e fechamento contábil'}]},
+  ]},
+  {chave:'folha',titulo:'Folha de pagamento',icone:UsersRound,grupos:[
+    {titulo:'Visão geral',funcoes:[{titulo:'Painel da folha'}]},
+    {titulo:'Cadastros',funcoes:[{titulo:'Empregados',rota:'/folha/empregados'},{titulo:'Eventos',rota:'/folha/eventos'}]},
+    {titulo:'Movimentações',funcoes:[{titulo:'Lançamentos por competência',rota:'/folha/lancamentos'}]},
+    {titulo:'Processamento',funcoes:[{titulo:'Processamento e contracheques',rota:'/folha/contracheques'}]},
+    {titulo:'Gestão trabalhista',funcoes:[{titulo:'Férias'},{titulo:'Documentos trabalhistas'}]},
+    {titulo:'Consultas',funcoes:[{titulo:'Histórico e relatórios'}]},
+    {titulo:'Configurações',funcoes:[{titulo:'Parâmetros de cálculo',rota:'/folha/contracheques',destacar:false}]},
+  ]},
+  {chave:'financeiro',titulo:'Financeiro',icone:Wallet,grupos:[
+    {titulo:'Visão geral',funcoes:[{titulo:'Painel financeiro',rota:'/financeiro'}]},
+    {titulo:'Receitas',funcoes:[{titulo:'Honorários',rota:'/financeiro/honorarios'},{titulo:'Contas a receber',rota:'/financeiro/recebimentos'}]},
+    {titulo:'Despesas',funcoes:[{titulo:'Contas a pagar',rota:'/financeiro/despesas'}]},
+    {titulo:'Tesouraria',funcoes:[{titulo:'Movimentações',rota:'/financeiro/movimentacoes'},{titulo:'Contas bancárias e caixa',rota:'/financeiro/contas'}]},
+    {titulo:'Gestão e análise',funcoes:[{titulo:'Fluxo de caixa',rota:'/financeiro/fluxo-de-caixa'},{titulo:'Relatórios gerenciais',rota:'/financeiro/relatorios'}]},
+    {titulo:'Configurações',funcoes:[{titulo:'Categorias financeiras',rota:'/financeiro/contas',destacar:false}]},
+  ]},
 ];
 const LARGURA_PADRAO=234;
 const LARGURA_MINIMA=210;
@@ -88,7 +114,16 @@ export function Navegacao(){
       {modulos.map(modulo=>{const Icone=modulo.icone;const aberto=abertos.includes(modulo.chave);const ativo=caminho.startsWith(`/${modulo.chave}`);
         return <div className="grupo-menu" key={modulo.chave}>
           <button type="button" aria-expanded={aberto} className={`link-menu botao-modulo ${ativo?'ativo':''}`} onClick={()=>alternar(modulo.chave)}><Icone/><span>{modulo.titulo}</span>{aberto?<ChevronDown className="seta-menu"/>:<ChevronRight className="seta-menu"/>}</button>
-          {aberto&&<div className="submenu" aria-label={`Funções de ${modulo.titulo}`}>{modulo.funcoes.map(funcao=>funcao.rota?<Link key={funcao.titulo} onClick={()=>definirMenuMovelAberto(false)} href={funcao.rota} className={`subitem-menu ${caminho===funcao.rota||caminho.startsWith(funcao.rota+'/')?'ativo':''}`}>{funcao.titulo}</Link>:<span key={funcao.titulo} className="subitem-menu desabilitado" title="Funcionalidade ainda não disponível">{funcao.titulo}<LockKeyhole size={11}/></span>)}</div>}
+          {aberto&&<div className="submenu" aria-label={`Funções de ${modulo.titulo}`}>
+            {modulo.grupos.map(grupo=><div key={grupo.titulo} className="submenu-grupo">
+              <div className="submenu-titulo">{grupo.titulo}</div>
+              {grupo.funcoes.map(funcao=>{
+                const rotaBase=funcao.rota?.split('?')[0];
+                const selecionado=funcao.destacar!==false&&!!rotaBase&&(caminho===rotaBase||rotaBase!=='/fiscal'&&rotaBase!=='/financeiro'&&rotaBase!=='/fiscal/faturamento'&&caminho.startsWith(rotaBase+'/'));
+                return funcao.rota?<Link key={funcao.titulo} onClick={()=>definirMenuMovelAberto(false)} href={funcao.rota} className={`subitem-menu ${selecionado?'ativo':''}`}>{funcao.titulo}</Link>:<span key={funcao.titulo} className="subitem-menu desabilitado" title="Funcionalidade ainda não disponível">{funcao.titulo}<LockKeyhole size={11}/></span>;
+              })}
+            </div>)}
+          </div>}
         </div>;
       })}
       <Link href="/configuracoes" onClick={()=>definirMenuMovelAberto(false)} className={`link-menu ${caminho.startsWith('/configuracoes')?'ativo':''}`}><Settings2/>Configurações</Link>
