@@ -1,0 +1,36 @@
+/* On ERP — Login institucional, versão desktop-first */
+.on-login-fundo{min-height:100dvh;background:#eef2f5;padding:clamp(14px,3vw,52px);display:grid;place-items:center;color:#0A111C}
+.on-login-quadro{width:min(100%,1390px);min-height:min(825px,calc(100dvh - 60px));display:flex;flex-direction:column;overflow:hidden;border-radius:22px;background:#fff;box-shadow:0 22px 75px rgba(10,17,28,.12);border:1px solid #dfe5eb}
+.on-login-faixa{height:58px;min-height:58px;background:#0A111C;color:#F4F6F8;display:flex;align-items:center;gap:12px;padding:0 26px;font-size:16px;font-weight:500;letter-spacing:-.02em}
+.on-login-faixa img{height:31px;width:31px;object-fit:contain}
+.on-login-conteudo{display:grid;grid-template-columns:minmax(0,1.58fr) minmax(380px,1fr);flex:1;min-height:0}
+.on-login-institucional{position:relative;display:flex;min-height:680px;overflow:hidden;background:linear-gradient(120deg,#e7ecf0,#f8fafb)}
+.on-login-foto{position:absolute;inset:0 auto 0 0;width:64%;background-image:url('/marca/login-institucional.webp');background-size:cover;background-position:38% 45%}
+.on-login-foto:after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent 68%,#eef2f5 100%)}
+.on-login-texto{position:relative;z-index:1;margin:auto 6% auto 60%;width:36%;min-width:235px}
+.on-login-texto h1{font-size:clamp(26px,2.5vw,43px);font-weight:350;line-height:1.18;letter-spacing:-.045em;margin:0}
+.on-login-texto h1 strong{font-weight:470;color:#5C9D29}
+.on-login-linha{display:block;background:#7CB93C;width:85px;height:3px;border-radius:10px;margin:26px 0 17px}
+.on-login-texto p{font-size:13px;color:#697889;line-height:1.6;max-width:270px}
+.on-login-painel{padding:clamp(34px,4.5vw,72px) clamp(30px,4vw,62px) 26px;display:flex;align-items:stretch;flex-direction:column;justify-content:center;background:#fff}
+.on-login-logo{display:block;height:118px;width:220px;max-width:100%;object-fit:contain;margin:0 auto 4px}
+.on-login-painel h2{text-align:center;font-size:26px;font-weight:550;letter-spacing:-.045em;margin:0}
+.on-login-subtitulo{text-align:center;font-size:14px;color:#6e7b8d;margin:6px 0 36px}
+.on-login-formulario{display:grid;gap:19px}.on-login-campo{display:flex;flex-direction:column;gap:8px}.on-login-campo label{font-size:13px;color:#607087;font-weight:500}
+.on-login-entrada{height:49px;display:flex;align-items:center;gap:11px;padding:0 14px;border:1px solid #d7dfe7;border-radius:9px;color:#8190a2;transition:border-color .15s,box-shadow .15s}
+.on-login-entrada:focus-within{border-color:#7CB93C;box-shadow:0 0 0 3px rgba(124,185,60,.12)}
+.on-login-entrada input{min-width:0;flex:1;background:transparent;border:0!important;outline:0!important;box-shadow:none!important;padding:0!important;height:100%;font-size:14px;color:#0A111C;min-height:0!important}
+.on-login-entrada input::placeholder{color:#93a0af}
+.on-login-olho{background:transparent;border:0;color:#8694a5;min-width:30px;min-height:34px;display:grid;place-items:center;padding:0}
+.on-login-olho:hover{color:#0A111C}
+.on-login-entrar{height:48px;border:0;border-radius:9px;background:#7CB93C;color:#14220f;font-weight:600;font-size:14px;display:flex;justify-content:center;align-items:center;gap:10px;transition:background .15s}
+.on-login-entrar:hover:not(:disabled){background:#8bc747}.on-login-entrar:disabled{opacity:.65;cursor:wait}
+.on-login-link{border:0;background:transparent;color:#557aa0;font-size:13px;margin:20px auto 0;min-height:30px}.on-login-link:hover{text-decoration:underline}
+.on-login-separador{display:flex;align-items:center;gap:17px;color:#8591a0;margin:23px 0;font-size:12px;letter-spacing:.08em}.on-login-separador:before,.on-login-separador:after{content:'';height:1px;background:#dde4eb;flex:1}
+.on-login-id{height:46px;border:1px solid #253345;background:#0A111C;color:#fff;border-radius:9px;font-weight:500;font-size:13px;opacity:.6;cursor:not-allowed}
+.on-login-indisponivel{text-align:center;color:#8692a2;font-size:11px;margin:9px 0 0}
+.on-login-rodape{text-align:center;font-size:12px;color:#8b97a7;margin:auto 0 0;padding-top:36px}
+.on-login-aviso{border-radius:8px;padding:11px 13px;font-size:12px;line-height:1.5;margin:0;display:flex;gap:8px;align-items:center}.on-login-erro{background:#fff1f1;border:1px solid #f0c5c5;color:#a52e30}.on-login-sucesso{background:#f1faed;border:1px solid #cbe4c1;color:#417723}
+@media(max-width:1050px){.on-login-conteudo{grid-template-columns:1fr 420px}.on-login-texto{margin-left:52%;min-width:180px;width:43%}.on-login-foto{width:64%}.on-login-texto h1{font-size:28px}}
+@media(max-width:800px){.on-login-fundo{padding:0;background:#fff}.on-login-quadro{border:0;box-shadow:none;border-radius:0;min-height:100dvh}.on-login-faixa{height:55px;min-height:55px}.on-login-conteudo{grid-template-columns:1fr}.on-login-institucional{display:none}.on-login-painel{padding:32px clamp(20px,7vw,60px) max(32px,env(safe-area-inset-bottom));min-height:calc(100dvh - 55px);justify-content:center}.on-login-logo{height:105px}.on-login-painel h2{font-size:24px}.on-login-subtitulo{margin-bottom:32px}.on-login-rodape{margin-top:54px}}
+@media(prefers-reduced-motion:reduce){.on-login-entrar,.on-login-entrada{transition:none}}
