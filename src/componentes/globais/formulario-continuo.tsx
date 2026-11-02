@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition, type FormEvent, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { mensagemErroPublica, MENSAGENS } from './mensagens';
 
 type RetornoSalvamento = { sucesso?: boolean; mensagem?: string } | undefined;
 type AcaoSalvamento = (dados: FormData) => Promise<RetornoSalvamento>;
@@ -10,7 +11,7 @@ type Propriedades = {
   acao: AcaoSalvamento;
   children: ReactNode;
   className?: string;
-  /** Edições precisam mudar para uma rota de inclusão, evitando regravar o mesmo ID. */
+  /** Rota de origem; após editar, retornar à listagem sem abrir um novo cadastro. */
   rotaNovoAposEdicao?: string;
   /** Chamado após limpar o DOM para zerar campos React controlados. */
   aoLimpar?: () => void;
@@ -23,7 +24,7 @@ type Propriedades = {
 /**
  * Política de formulários On ERP:
  * - cadastrar => salvar sem navegar, exibir sucesso, limpar e permitir novo registro;
- * - editar => salvar e abrir um formulário NOVO (se rota fornecida), sem risco de sobrescrever;
+ * - editar => salvar e retornar à visualização de origem quando houver rota;
  * - erros => manter os dados preenchidos, sem fechar janela;
  * - ações pontuais => confirmar e manter dados, sem reset;
  * - dados ocultos e seletores de contexto são mantidos (cliente, modalidade etc.).
@@ -65,15 +66,18 @@ export function FormularioContinuo({acao,children,className,rotaNovoAposEdicao,a
         const retorno=await acao(dados);
         if(retorno&&retorno.sucesso===false)throw new Error(retorno.mensagem||'Não foi possível salvar.');
         if(modo==='edicao'&&rotaNovoAposEdicao){
-          roteador.replace(rotaNovoAposEdicao);
+          const destino = new URL(rotaNovoAposEdicao, 'https://on-erp.local');
+          ['novo','editar','modal','id'].forEach(parametro=>destino.searchParams.delete(parametro));
+          roteador.replace(destino.pathname + destino.search);
           roteador.refresh();
           return;
         }
         if(modo==='cadastro')limparCampos(formulario);
-        definirMensagem(retorno?.mensagem||'Registro salvo com sucesso.');
+        formulario.dispatchEvent(new CustomEvent('onerp:salvo',{bubbles:true}));
+        definirMensagem(retorno?.mensagem||(modo==='edicao'?MENSAGENS.edicao:MENSAGENS.cadastro));
         roteador.refresh();
       } catch(falha) {
-        definirErro(falha instanceof Error ? falha.message : 'Não foi possível salvar. Tente novamente.');
+        definirErro(mensagemErroPublica(falha,MENSAGENS.falhaSalvamento));
       } finally {
         envioEmCurso.current=false;
       }

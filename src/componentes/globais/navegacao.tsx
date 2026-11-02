@@ -16,15 +16,15 @@ const modulos:ModuloMenu[]=[
     {titulo:'Relatórios societários'},
   ]},
   {chave:'fiscal',titulo:'Fiscal',icone:ReceiptText,funcoes:[
-    {titulo:'Visão do faturamento',rota:'/fiscal/faturamento'},
+    {titulo:'Visão geral',rota:'/fiscal/faturamento'},
     {titulo:'Faturamento MEI',rota:'/fiscal/faturamento/mei'},
     {titulo:'Faturamento convencional',rota:'/fiscal/faturamento/convencional'},
-    {titulo:'Categorias fiscais',rota:'/fiscal/categorias'},
+    {titulo:'Categorias',rota:'/fiscal/categorias'},
     {titulo:'Documentos fiscais'}, {titulo:'DAS MEI'}, {titulo:'DASN-SIMEI'},
   ]},
   {chave:'contabil',titulo:'Contábil',icone:BookOpen,funcoes:[{titulo:'Plano de contas'},{titulo:'Lançamentos'},{titulo:'Conciliação bancária'},{titulo:'Demonstrativos'}]},
   {chave:'folha',titulo:'Folha de pagamento',icone:UsersRound,funcoes:[{titulo:'Empregados',rota:'/folha/empregados'},{titulo:'Eventos',rota:'/folha/eventos'},{titulo:'Lançamentos',rota:'/folha/lancamentos'},{titulo:'Contracheques',rota:'/folha/contracheques'},{titulo:'Férias'}]},
-  {chave:'financeiro',titulo:'Financeiro',icone:Wallet,funcoes:[{titulo:'Visão geral',rota:'/financeiro'},{titulo:'Honorários',rota:'/financeiro/honorarios'},{titulo:'Contas a receber',rota:'/financeiro/recebimentos'},{titulo:'Contas a pagar',rota:'/financeiro/despesas'},{titulo:'Movimentações',rota:'/financeiro/movimentacoes'},{titulo:'Contas e categorias',rota:'/financeiro/contas'},{titulo:'Fluxo de caixa',rota:'/financeiro/fluxo-de-caixa'},{titulo:'Relatórios',rota:'/financeiro/relatorios'}]},
+  {chave:'financeiro',titulo:'Financeiro',icone:Wallet,funcoes:[{titulo:'Painel financeiro',rota:'/financeiro'},{titulo:'Honorários',rota:'/financeiro/honorarios'},{titulo:'Contas a receber',rota:'/financeiro/recebimentos'},{titulo:'Contas a pagar',rota:'/financeiro/despesas'},{titulo:'Movimentações',rota:'/financeiro/movimentacoes'},{titulo:'Contas e categorias',rota:'/financeiro/contas'},{titulo:'Fluxo de caixa',rota:'/financeiro/fluxo-de-caixa'},{titulo:'Relatórios',rota:'/financeiro/relatorios'}]},
 ];
 const LARGURA_PADRAO=234;
 const LARGURA_MINIMA=210;
@@ -83,7 +83,7 @@ export function Navegacao(){
       {modulos.map(modulo=>{const Icone=modulo.icone;const aberto=abertos.includes(modulo.chave);const ativo=caminho.startsWith(`/${modulo.chave}`);
         return <div className="grupo-menu" key={modulo.chave}>
           <button type="button" aria-expanded={aberto} className={`link-menu botao-modulo ${ativo?'ativo':''}`} onClick={()=>alternar(modulo.chave)}><Icone/><span>{modulo.titulo}</span>{aberto?<ChevronDown className="seta-menu"/>:<ChevronRight className="seta-menu"/>}</button>
-          {aberto&&<div className="submenu" aria-label={`Funções de ${modulo.titulo}`}>{modulo.funcoes.map(funcao=>funcao.rota?<Link key={funcao.titulo} href={funcao.rota} className={`subitem-menu ${caminho===funcao.rota?'ativo':''}`}>{funcao.titulo}</Link>:<span key={funcao.titulo} className="subitem-menu desabilitado" title="Funcionalidade planejada">{funcao.titulo}<LockKeyhole size={11}/></span>)}</div>}
+          {aberto&&<div className="submenu" aria-label={`Funções de ${modulo.titulo}`}>{modulo.funcoes.map(funcao=>funcao.rota?<Link key={funcao.titulo} href={funcao.rota} className={`subitem-menu ${caminho===funcao.rota?'ativo':''}`}>{funcao.titulo}</Link>:<span key={funcao.titulo} className="subitem-menu desabilitado" title="Funcionalidade ainda não disponível">{funcao.titulo}<LockKeyhole size={11}/></span>)}</div>}
         </div>;
       })}
       <Link href="/configuracoes" className={`link-menu ${caminho.startsWith('/configuracoes')?'ativo':''}`}><Settings2/>Configurações</Link>

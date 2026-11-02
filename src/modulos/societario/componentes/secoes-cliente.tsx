@@ -23,6 +23,7 @@ const configuracoes:Record<string,{tabela:string;tipo:string;titulo:string;colun
   implantacao:{tabela:'itens_implantacao_clientes',tipo:'implantacao',titulo:'Checklist de implantação',coluna:'descricao',campos:[{nome:'descricao',rotulo:'Etapa de implantação',obrigatorio:true},{nome:'posicao',rotulo:'Ordem',tipo:'number'}]},
   observacoes:{tabela:'observacoes_clientes',tipo:'observacao',titulo:'Histórico de observações',coluna:'observacao',campos:[{nome:'observacao',rotulo:'Observação',obrigatorio:true}]},
 };
+const rotulosNovo:Record<string,string>={"enderecos": "Novo endereço", "contatos": "Novo contato", "representantes": "Novo representante", "servicos": "Vincular serviço", "obrigacoes": "Nova obrigação", "tarefas": "Nova tarefa", "implantacao": "Nova etapa", "observacoes": "Nova observação"};
 const nomeAbas:Record<string,string>={resumo:'Resumo',enderecos:'Endereços',contatos:'Contatos',representantes:'Representantes',servicos:'Serviços',documentos:'Documentos',acessos:'Acessos',obrigacoes:'Obrigações',tarefas:'Tarefas',implantacao:'Implantação',observacoes:'Observações'};
 export function AbasCliente({id,aba}:{id:string;aba:string}){return <nav className="abas">{Object.entries(nomeAbas).map(([chave,nome])=><Link key={chave} className={`aba ${aba===chave?'ativa':''}`} href={`/societario/clientes/${id}?aba=${chave}`}>{nome}</Link>)}</nav>}
 function textoItem(item:Record<string,unknown>,campo:string,mapaServicos:Record<string,string>){const valor=String(item[campo]??'');return campo==='servico_id'?(mapaServicos[valor]??'Serviço'):(valor||'—')}
@@ -56,7 +57,7 @@ export async function SecaoCliente({id,aba,editar}:{id:string;aba:string;editar?
   const mapaServicos=Object.fromEntries(servicos.map(servico=>[servico.id,servico.nome]));
   const registroAtual=registros.find(item=>item.id===editar);
   const mostrarFormulario=edicaoPermitida&&(editar==='novo'||Boolean(registroAtual));
-  return <><Cartao titulo={configuracao.titulo} acoes={edicaoPermitida?<Link className="botao primario" href={abrirNovo}><Plus size={14}/>Novo registro</Link>:null}>
+  return <><Cartao titulo={configuracao.titulo} acoes={edicaoPermitida?<Link className="botao primario" href={abrirNovo}><Plus size={14}/>{rotulosNovo[aba]||"Adicionar registro"}</Link>:null}>
     {registros.length===0?<ListaVazia/>:<div className="tabela-wrapper"><table className="tabela"><thead><tr><th>Descrição</th><th>Informações</th><th>Situação</th><th style={{textAlign:'right'}}>Ações</th></tr></thead><tbody>{registros.map(item=><tr key={String(item.id)}><td><span className="nome-item">{textoItem(item,configuracao.coluna,mapaServicos)}</span></td><td>{item.data_vencimento?`Vencimento: ${dataBrasileira(String(item.data_vencimento))}`:item.criado_em?`Incluído: ${dataBrasileira(String(item.criado_em))}`:'—'}</td><td>{typeof item.situacao==='string'?<Etiqueta valor={item.situacao}/>:aba==='implantacao'?(item.concluido?'Concluída':'Pendente'):'—'}</td><td><div className="acoes-registro">
       {aba==='implantacao'&&edicaoPermitida&&<form action={alternarItem}><input type="hidden" name="id" value={String(item.id)}/><input type="hidden" name="cliente_id" value={id}/><input type="hidden" name="concluido" value={String(!item.concluido)}/><button className="botao" type="submit">{item.concluido?'Reabrir':'Concluir'}</button></form>}
       {aba==='tarefas'&&<Link className="botao" href={`/societario/tarefas/${item.id}`}>Checklist</Link>}
@@ -71,7 +72,7 @@ export async function SecaoCliente({id,aba,editar}:{id:string;aba:string;editar?
         ? <CampoDocumento key={campo.nome} nome={campo.nome} rotulo={campo.rotulo} padrao={String(registroAtual?.[campo.nome]??'')}/>
         : <Campo key={campo.nome} nome={campo.nome} rotulo={campo.rotulo} tipo={campo.tipo||'text'} obrigatorio={campo.obrigatorio} padrao={registroAtual?.[campo.nome]===null?'':String(registroAtual?.[campo.nome]??'')} opcoes={campo.opcoes}/>)}
       {(aba==='contatos'||aba==='enderecos')&&<label className="linha pequeno"><input type="checkbox" name="principal" defaultChecked={Boolean(registroAtual?.principal)}/>Principal</label>}
-      <div className="largo linha"><button type="submit" className="botao primario">{registroAtual?'Salvar alterações':'Adicionar'}</button><Link href={fecharEm} className="botao">Cancelar</Link></div>
+      <div className="largo linha"><button type="submit" className="botao primario">{registroAtual?'Salvar alterações':'Salvar'}</button><Link href={fecharEm} className="botao">Cancelar</Link></div>
     </FormularioContinuo>
   </JanelaModal>}
   </>;

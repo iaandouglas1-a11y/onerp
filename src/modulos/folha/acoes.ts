@@ -50,7 +50,7 @@ export async function salvarEmpregado(dados:FormData){
   const {error:erro}=await banco.from('empregados').insert({escritorio_id:escritorioId,...registro});
   conferirErro(erro,'Cadastrar empregado');
  }
- revalidatePath('/folha/empregados');return {sucesso:true,mensagem:id?'Empregado atualizado.':'Empregado cadastrado. Inclua outro se desejar.'};
+ revalidatePath('/folha/empregados');return {sucesso:true,mensagem:id?'Empregado atualizado com sucesso.':'Empregado cadastrado com sucesso.'};
 }
 export async function salvarEvento(dados:FormData){
  const {banco,escritorioId}=await exigirEdicao();
@@ -105,7 +105,7 @@ export async function salvarLancamentoEvento(dados:FormData){
   referencia:calculado.referencia||ler(dados,'referencia')||null,observacao:ler(dados,'observacao')||null};
  if(id){const {error:erro}=await banco.from('lancamentos_eventos_folha').update(registro).eq('id',id).eq('escritorio_id',escritorioId);conferirErro(erro,'Editar lançamento');}
  else {const {error:erro}=await banco.from('lancamentos_eventos_folha').insert({escritorio_id:escritorioId,criado_por:usuario.id,...registro});conferirErro(erro,'Lançar evento');}
- revalidatePath('/folha/lancamentos');return {sucesso:true,mensagem:'Evento lançado. É possível incluir outro sem fechar a janela.'};
+ revalidatePath('/folha/lancamentos');return {sucesso:true,mensagem:'Evento registrado com sucesso.'};
 }
 export async function excluirLancamentoEvento(dados:FormData):Promise<void>{
  const {banco,escritorioId}=await exigirEdicao();const id=uuid(textoObrigatorio(dados.get('id'),'Lançamento'));

@@ -20,6 +20,6 @@ export function FormularioEvento({evento}:{evento?:EventoFolha}){
   <Campo nome="incide_irrf" rotulo="Integra base do IRRF?" padrao={padrao('incide_irrf')} opcoes={opcoes}/>
   <Campo nome="incide_fgts" rotulo="Integra base do FGTS?" padrao={padrao('incide_fgts')} opcoes={opcoes}/>
   <Campo nome="reduz_base" rotulo="Desconto reduz as bases?" padrao={padrao('reduz_base')} opcoes={opcoes}/>
-  <div className="largo linha" style={{justifyContent:'flex-end'}}><button className="botao primario" type="submit">{evento?'Salvar alterações':'Salvar e incluir outro'}</button></div>
+  <div className="largo linha" style={{justifyContent:'flex-end'}}><button className="botao primario" type="submit">{evento?'Salvar alterações':'Salvar'}</button></div>
  </FormularioContinuo>;
 }

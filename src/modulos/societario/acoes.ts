@@ -62,7 +62,7 @@ export async function salvarCliente(dados:FormData) {
     }
   }
   revalidatePath('/societario/clientes');
-  return {sucesso:true,mensagem:'Cliente cadastrado. Você pode incluir outro.',id:registro!.id};
+  return {sucesso:true,mensagem:'Cliente cadastrado com sucesso.',id:registro!.id};
 }
 async function validarCliente(banco:Awaited<ReturnType<typeof exigirEdicao>>['banco'],escritorioId:string,clienteId:string) {
   const {data:cliente,error:erro}=await banco.from('clientes').select('id').eq('escritorio_id',escritorioId).eq('id',clienteId).maybeSingle();
@@ -99,7 +99,7 @@ export async function salvarRegistroSocietario(dados:FormData) {
     const {error:erro}=await banco.from(tabela).insert({...valores,escritorio_id:escritorioId,cliente_id:clienteId});
     conferirErro(erro,'Criar registro');
   }
-  revalidatePath(`/societario/clientes/${clienteId}`);revalidatePath('/societario/tarefas');revalidatePath('/societario/obrigacoes');return {sucesso:true,mensagem:registroId?'Registro atualizado.':'Registro cadastrado. Você pode incluir outro.'};
+  revalidatePath(`/societario/clientes/${clienteId}`);revalidatePath('/societario/tarefas');revalidatePath('/societario/obrigacoes');return {sucesso:true,mensagem:registroId?'Registro atualizado com sucesso.':'Registro cadastrado com sucesso.'};
 }
 export async function atualizarSituacaoTarefa(dados:FormData) {
   const {banco,escritorioId}=await exigirEdicao();const id=textoObrigatorio(dados.get('id'),'Tarefa');const situacao=ler(dados,'situacao');
@@ -132,7 +132,7 @@ export async function alternarItem(dados:FormData) {
 export async function criarServico(dados:FormData) {
   const {banco,escritorioId}=await exigirEdicao();
   const {error:erro}=await banco.from('servicos').insert({escritorio_id:escritorioId,codigo:textoObrigatorio(dados.get('codigo'),'Código').toUpperCase(),nome:textoObrigatorio(dados.get('nome'),'Nome'),descricao:vazioOuTexto(dados,'descricao')});
-  conferirErro(erro);revalidatePath('/societario/servicos');return {sucesso:true,mensagem:'Serviço cadastrado. Você pode incluir outro.'};
+  conferirErro(erro);revalidatePath('/societario/servicos');return {sucesso:true,mensagem:'Serviço cadastrado com sucesso.'};
 }
 /** Edita um serviço existente sem romper os vínculos com clientes e honorários. */
 export async function editarServico(dados: FormData) {
@@ -151,7 +151,7 @@ export async function editarServico(dados: FormData) {
   revalidatePath('/societario/servicos');
   revalidatePath('/societario/clientes');
   revalidatePath('/financeiro/honorarios');
-  return {sucesso:true,mensagem:'Serviço atualizado. Você pode cadastrar outro.'};
+  return {sucesso:true,mensagem:'Serviço atualizado com sucesso.'};
 }
 
 /** Exclusão definitiva somente para serviço sem contratos ou clientes vinculados. */
@@ -179,7 +179,7 @@ export async function criarModeloObrigacao(dados:FormData) {
   if(!['MONTHLY','QUARTERLY','YEARLY','ONCE'].includes(recorrencia))throw new Error('Recorrência inválida.');
   const dia=Number(ler(dados,'dia_vencimento')||0);
   const {error:erro}=await banco.from('modelos_obrigacoes').insert({escritorio_id:escritorioId,nome:textoObrigatorio(dados.get('nome'),'Nome'),modulo:ler(dados,'modulo')||'SOCIETARIO',recorrencia,dia_vencimento:dia||null,descricao:vazioOuTexto(dados,'descricao')});
-  conferirErro(erro);revalidatePath('/societario/obrigacoes');return {sucesso:true,mensagem:'Modelo cadastrado. Você pode incluir outro.'};
+  conferirErro(erro);revalidatePath('/societario/obrigacoes');return {sucesso:true,mensagem:'Modelo cadastrado com sucesso.'};
 }
 export async function enviarDocumento(dados:FormData) {
   const {banco,escritorioId,usuario}=await exigirEdicao();
@@ -195,7 +195,7 @@ export async function enviarDocumento(dados:FormData) {
   const {error:erroRegistro}=await banco.from('documentos').insert({escritorio_id:escritorioId,cliente_id:clienteId,categoria:ler(dados,'categoria')||'GERAL',titulo:ler(dados,'titulo')||nome,
     repositorio_arquivos:'on-erp-private',caminho_arquivo:caminho,tipo_midia:arquivo.type,tamanho_arquivo_bytes:arquivo.size,data_validade:normalizarData(dados.get('data_validade')),enviado_por:usuario.id});
   if(erroRegistro){await banco.storage.from('on-erp-private').remove([caminho]);conferirErro(erroRegistro,'Registrar documento');}
-  revalidatePath(destinoCliente(clienteId));return {sucesso:true,mensagem:'Documento enviado. Você pode enviar outro.'};
+  revalidatePath(destinoCliente(clienteId));return {sucesso:true,mensagem:'Documento enviado com sucesso.'};
 }
 export async function obterLinkDocumento(id:string) {
   const {banco,escritorioId}=await exigirEscritorio();
@@ -220,7 +220,7 @@ export async function criarCredencial(dados:FormData) {
   conferirErro(erro,'Salvar credencial');
   const {error:erroLog}=await administrador.from('historico_acessos_credenciais').insert({escritorio_id:escritorioId,credencial_id:registro!.id,usuario_id:usuario.id,acao:'CREATE'});
   conferirErro(erroLog,'Registrar auditoria do cofre');
-  revalidatePath(destinoCliente(clienteId));return {sucesso:true,mensagem:'Credencial salva. Você pode cadastrar outra.'};
+  revalidatePath(destinoCliente(clienteId));return {sucesso:true,mensagem:'Credencial salva com sucesso.'};
 }
 export async function revelarCredencial(id:string,clienteId:string) {
   const {escritorioId,usuario,banco}=await exigirEdicao();await validarCliente(banco,escritorioId,clienteId);

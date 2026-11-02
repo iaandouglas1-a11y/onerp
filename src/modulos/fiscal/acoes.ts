@@ -40,12 +40,12 @@ export async function salvarMovimentoFiscal(dados:FormData) {
     conferirErro(erro,'Incluir movimento');
   }
   revalidatePath('/fiscal/faturamento');revalidatePath('/fiscal/faturamento/mei');revalidatePath('/fiscal/faturamento/convencional');
-  return {sucesso:true,mensagem:id?'Lançamento atualizado.':'Lançamento cadastrado. Você pode incluir outro.',id:id||null};
+  return {sucesso:true,mensagem:id?'Lançamento atualizado com sucesso.':'Lançamento registrado com sucesso.',id:id||null};
 }
 export async function criarCategoriaFiscal(dados:FormData) {
   const {banco,escritorioId}=await exigirEdicao();const tipo=ler(dados,'tipo_movimento');if(!['RECEITA','ENTRADA','DESPESA'].includes(tipo))throw new Error('Tipo inválido.');
   const {error:erro}=await banco.from('categorias_fiscais').insert({escritorio_id:escritorioId,nome:textoObrigatorio(dados.get('nome'),'Nome'),tipo_movimento:tipo});
-  conferirErro(erro);revalidatePath('/fiscal/categorias');return {sucesso:true,mensagem:'Categoria cadastrada. Você pode incluir outra.'};
+  conferirErro(erro);revalidatePath('/fiscal/categorias');return {sucesso:true,mensagem:'Categoria cadastrada com sucesso.'};
 }
 export async function configurarLimiteMei(dados:FormData) {
   const {banco,escritorioId,usuario}=await exigirEdicao();
@@ -68,7 +68,7 @@ export async function registrarAjusteMei(dados:FormData) {
   const valor=valorMonetarioBr(ler(dados,'valor'));
   if(valor===0)throw new Error('Informe valor diferente de zero.');
   const {error:erro}=await banco.from('ajustes_faturamento_mei').insert({escritorio_id:escritorioId,cliente_id:clienteId,competencia:`${competencia}-01`,valor,justificativa:textoObrigatorio(dados.get('justificativa'),'Justificativa'),criado_por:usuario.id});
-  conferirErro(erro);revalidatePath('/fiscal/faturamento/mei');return {sucesso:true,mensagem:'Ajuste registrado. Você pode incluir outro.'};
+  conferirErro(erro);revalidatePath('/fiscal/faturamento/mei');return {sucesso:true,mensagem:'Ajuste registrado com sucesso.'};
 }
 
 export async function excluirMovimentoFiscal(dados:FormData){

@@ -40,7 +40,7 @@ export default async function Servicos({searchParams}:{searchParams:Promise<Para
         <Campo nome="codigo" rotulo="Código" obrigatorio placeholder="Ex.: MEI"/>
         <Campo nome="nome" rotulo="Nome" obrigatorio/>
         <Campo nome="descricao" rotulo="Descrição"/>
-        <div className="linha"><button type="submit" className="botao primario">Salvar e cadastrar outro</button>
+        <div className="linha"><button type="submit" className="botao primario">Salvar</button>
           <Link href={rota} className="botao">Fechar</Link></div>
       </FormularioContinuo>
     </JanelaModal>}

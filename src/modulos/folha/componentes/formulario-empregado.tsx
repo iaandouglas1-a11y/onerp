@@ -23,6 +23,6 @@ export function FormularioEmpregado({clientes,empregado}:{clientes:ClienteResumi
   <Campo rotulo="Dependentes IRRF" nome="dependentes_irrf" tipo="number" padrao={empregado?.dependentes_irrf??0} min="0" max="99"/>
   <Campo rotulo="Situação" nome="situacao" padrao={empregado?.situacao||'ATIVO'} obrigatorio opcoes={[{valor:'ATIVO',rotulo:'Ativo'},{valor:'AFASTADO',rotulo:'Afastado'},{valor:'DESLIGADO',rotulo:'Desligado'}]}/>
   <div className="campo largo"><label htmlFor="observacoes">Observações</label><textarea id="observacoes" name="observacoes" defaultValue={empregado?.observacoes||''}/></div>
-  <div className="largo linha" style={{justifyContent:'flex-end'}}><button className="botao primario" type="submit">{empregado?'Salvar alterações':'Salvar e incluir outro'}</button></div>
+  <div className="largo linha" style={{justifyContent:'flex-end'}}><button className="botao primario" type="submit">{empregado?'Salvar alterações':'Salvar'}</button></div>
  </FormularioContinuo>;
 }

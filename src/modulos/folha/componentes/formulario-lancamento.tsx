@@ -35,6 +35,6 @@ export function FormularioLancamento({empregados,eventos,competencia,lancamento}
   {referencia!=='VALOR'&&<div className="campo"><label>Valor calculado (prévia)</label><div className="muted pequeno" role="status">{erroPrevia||previa||'Informe a quantidade para visualizar o cálculo.'}</div></div>}
   {referencia==='HORAS'&&<div className="largo aviso-configuracao">O cálculo utiliza o divisor de horas mensais do empregado. Horas extras consideram o percentual parametrizado na rubrica; confira jornada, convenção coletiva e incidências.</div>}
   <Campo nome="observacao" rotulo="Observação" padrao={lancamento?.observacao}/>
-  <div className="largo linha" style={{justifyContent:'flex-end'}}><button type="submit" className="botao primario">{lancamento?'Salvar alterações':'Salvar e incluir outro'}</button></div>
+  <div className="largo linha" style={{justifyContent:'flex-end'}}><button type="submit" className="botao primario">{lancamento?'Salvar alterações':'Salvar'}</button></div>
  </FormularioContinuo>;
 }

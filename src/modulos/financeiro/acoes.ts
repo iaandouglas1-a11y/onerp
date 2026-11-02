@@ -28,7 +28,7 @@ export async function salvarCategoriaFinanceira(dados:FormData){
  const registro={nome:textoObrigatorio(dados.get('nome'),'Nome'),tipo,ativo:dados.get('ativo')==='on'};const id=texto(dados,'id');
  const resultado=id?await banco.from('categorias_financeiras').update(registro).eq('id',id).eq('escritorio_id',escritorioId).select('id'):
  await banco.from('categorias_financeiras').insert({...registro,escritorio_id:escritorioId}).select('id');
- conferirErro(resultado.error,'Salvar categoria');if(!resultado.data?.length)throw new Error('Categoria não encontrada.');return retorno(id?'Categoria atualizada.':'Categoria cadastrada. Cadastre a próxima.');
+ conferirErro(resultado.error,'Salvar categoria');if(!resultado.data?.length)throw new Error('Categoria não encontrada.');return retorno(id?'Categoria atualizada com sucesso.':'Categoria cadastrada com sucesso.');
 }
 export async function salvarContaFinanceira(dados:FormData){
  const {banco,escritorioId}=await exigirEdicao();const tipo=texto(dados,'tipo');if(!['BANCO','CAIXA'].includes(tipo))throw new Error('Tipo de conta inválido.');
@@ -36,7 +36,7 @@ export async function salvarContaFinanceira(dados:FormData){
  const registro={nome:textoObrigatorio(dados.get('nome'),'Nome'),tipo,codigo_banco:texto(dados,'codigo_banco')||null,ativo:dados.get('ativo')==='on',saldo_inicial:saldo,data_saldo_inicial:texto(dados,'data_saldo_inicial')||null};
  const id=texto(dados,'id');const resultado=id?await banco.from('contas_financeiras').update(registro).eq('id',id).eq('escritorio_id',escritorioId).select('id'):
  await banco.from('contas_financeiras').insert({...registro,escritorio_id:escritorioId}).select('id');
- conferirErro(resultado.error,'Salvar conta');if(!resultado.data?.length)throw new Error('Conta não encontrada.');return retorno(id?'Conta atualizada.':'Conta cadastrada. Cadastre a próxima.');
+ conferirErro(resultado.error,'Salvar conta');if(!resultado.data?.length)throw new Error('Conta não encontrada.');return retorno(id?'Conta atualizada com sucesso.':'Conta cadastrada com sucesso.');
 }
 export async function salvarHonorario(dados:FormData){
  const {banco,escritorioId}=await exigirEdicao();const cliente_id=await validarCliente(banco,escritorioId,identificador(dados,'cliente_id'));
@@ -48,7 +48,7 @@ export async function salvarHonorario(dados:FormData){
  const registro={cliente_id,servico_id,descricao:textoObrigatorio(dados.get('descricao'),'Descrição'),valor:moedaPositiva(dados),dia_vencimento,data_inicio,data_fim,ativo:dados.get('ativo')==='on'};
  const id=texto(dados,'id');const resultado=id?await banco.from('contratos_honorarios').update(registro).eq('id',id).eq('escritorio_id',escritorioId).select('id'):
  await banco.from('contratos_honorarios').insert({...registro,escritorio_id:escritorioId}).select('id');
- conferirErro(resultado.error,'Salvar honorário');if(!resultado.data?.length)throw new Error('Honorário não encontrado.');return retorno(id?'Honorário atualizado.':'Honorário cadastrado. Cadastre o próximo.');
+ conferirErro(resultado.error,'Salvar honorário');if(!resultado.data?.length)throw new Error('Honorário não encontrado.');return retorno(id?'Honorário atualizado com sucesso.':'Honorário cadastrado com sucesso.');
 }
 export async function gerarCobrancasRecorrentes(dados:FormData){
  const {banco,escritorioId}=await exigirEdicao();const competencia=mesValido(texto(dados,'competencia'));
@@ -66,7 +66,7 @@ export async function salvarCobranca(dados:FormData){
  }
  const resultado=id?await banco.from('contas_receber').update(registro).eq('id',id).eq('escritorio_id',escritorioId).select('id'):
  await banco.from('contas_receber').insert({...registro,escritorio_id:escritorioId,situacao:'ABERTO'}).select('id');
- conferirErro(resultado.error,'Salvar cobrança');if(!resultado.data?.length)throw new Error('Cobrança não encontrada.');return retorno(id?'Cobrança atualizada.':'Cobrança cadastrada. Cadastre a próxima.');
+ conferirErro(resultado.error,'Salvar cobrança');if(!resultado.data?.length)throw new Error('Cobrança não encontrada.');return retorno(id?'Cobrança atualizada com sucesso.':'Cobrança cadastrada com sucesso.');
 }
 export async function cancelarCobranca(dados:FormData){
  const {banco,escritorioId}=await exigirEdicao();const id=identificador(dados,'id');
@@ -98,7 +98,7 @@ export async function salvarDespesa(dados:FormData){
  if(id){const {data:atual}=await banco.from('contas_pagar').select('situacao').eq('id',id).eq('escritorio_id',escritorioId).maybeSingle();if(atual?.situacao!=='ABERTO')throw new Error('Despesa com baixa ou cancelada: estorne antes de editar.');}
  const resultado=id?await banco.from('contas_pagar').update(registro).eq('id',id).eq('escritorio_id',escritorioId).select('id'):
  await banco.from('contas_pagar').insert({...registro,escritorio_id:escritorioId,situacao:'ABERTO'}).select('id');
- conferirErro(resultado.error,'Salvar despesa');if(!resultado.data?.length)throw new Error('Despesa não encontrada.');return retorno(id?'Despesa atualizada.':'Despesa cadastrada. Cadastre a próxima.');
+ conferirErro(resultado.error,'Salvar despesa');if(!resultado.data?.length)throw new Error('Despesa não encontrada.');return retorno(id?'Despesa atualizada com sucesso.':'Despesa cadastrada com sucesso.');
 }
 export async function cancelarDespesa(dados:FormData){
  const {banco,escritorioId}=await exigirEdicao();const id=identificador(dados,'id');const {data:pagos}=await banco.from('pagamentos_contas_pagar').select('id').eq('escritorio_id',escritorioId).eq('conta_pagar_id',id).limit(1);
@@ -128,7 +128,7 @@ export async function salvarMovimentoFinanceiro(dados:FormData){
  const id=texto(dados,'id');if(id){const {data:original}=await banco.from('movimentacoes_financeiras').select('origem_registro').eq('id',id).eq('escritorio_id',escritorioId).maybeSingle();if(original?.origem_registro!=='MANUAL')throw new Error('Recebimentos, pagamentos e transferências são geridos pela rotina de origem.');}
  const resultado=id?await banco.from('movimentacoes_financeiras').update(registro).eq('id',id).eq('escritorio_id',escritorioId).select('id'):
  await banco.from('movimentacoes_financeiras').insert({...registro,escritorio_id:escritorioId}).select('id');
- conferirErro(resultado.error,'Salvar movimentação');if(!resultado.data?.length)throw new Error('Movimentação não encontrada.');return retorno(id?'Movimentação atualizada.':'Movimentação cadastrada. Cadastre a próxima.');
+ conferirErro(resultado.error,'Salvar movimentação');if(!resultado.data?.length)throw new Error('Movimentação não encontrada.');return retorno(id?'Movimentação atualizada com sucesso.':'Movimentação cadastrada com sucesso.');
 }
 export async function excluirMovimentoFinanceiro(dados:FormData){
  const {banco,escritorioId}=await exigirEdicao();const {data,error}=await banco.from('movimentacoes_financeiras').delete().eq('id',identificador(dados,'id')).eq('escritorio_id',escritorioId).eq('origem_registro','MANUAL').select('id');
