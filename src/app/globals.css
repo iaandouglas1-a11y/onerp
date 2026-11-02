@@ -330,3 +330,112 @@
   .gaveta-menu-movel .submenu-titulo{font-size:10px;padding-top:11px}
   .gaveta-menu-movel .submenu .subitem-menu{min-height:40px;font-size:13px}
 }
+
+
+/* v0.9.3 — Componentes operacionais: mesma tipografia e alinhamento.
+   Desktop: 13px em campos e botões; mobile: 16px em ambos para impedir
+   o zoom automático do Safari iOS sem bloquear o zoom por gesto.
+   Mantém ícones, checkboxes, radio buttons e navegação fora da regra. */
+:root{--fonte-controle:13px;--altura-controle:40px}
+/* Componentes com classe do design system, aplicados em todos os módulos. */
+.botao,
+.acoes-registro .botao,
+.confirmacao-acoes .botao,
+.botao-texto{
+  font-size:var(--fonte-controle);
+  line-height:1.25;
+  letter-spacing:-.01em;
+}
+.botao{
+  min-height:var(--altura-controle);
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  vertical-align:middle;
+  gap:7px;
+  padding:9px 12px;
+  white-space:nowrap;
+  text-align:center;
+  max-width:100%;
+}
+.botao svg{flex-shrink:0}
+/* Não altera caixas de seleção e componentes de navegação. */
+.campo :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea),
+.entrada,
+.filtros :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea){
+  font-size:var(--fonte-controle);
+  line-height:1.25;
+  min-width:0;
+  max-width:100%;
+}
+.campo :is(input:not([type="checkbox"]):not([type="radio"]),select),
+.filtros :is(input:not([type="checkbox"]):not([type="radio"]),select){min-height:var(--altura-controle)}
+.filtros{align-items:flex-end}
+.filtros > :is(a.botao,button.botao),
+.filtros form > :is(a.botao,button.botao){align-self:flex-end}
+.acoes-registro{align-items:center;gap:7px;min-width:0}
+.acoes-registro .botao{min-height:36px;padding:7px 10px}
+.acoes-registro form{display:inline-flex;align-items:center;min-width:0}
+.confirmacao-acoes{align-items:center}
+.confirmacao-acoes .botao{min-height:40px}
+.botao:focus-visible,.botao-texto:focus-visible{outline:2px solid var(--verde);outline-offset:2px}
+
+@media(max-width:800px){
+  :root{--fonte-controle:16px;--altura-controle:44px}
+  /* Safari iOS amplia automaticamente a página quando o campo focado tem
+     fonte efetiva inferior a 16px. Inclui entradas sem a classe .campo. */
+  :is(.conteudo,.modal-fundo,.confirmacao-fundo)
+  :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),select,textarea),
+  .campo :is(input:not([type="checkbox"]):not([type="radio"]),select,textarea),
+  .entrada{
+    font-size:16px!important;
+    line-height:1.25;
+    -webkit-text-size-adjust:100%;
+    min-width:0;
+    max-width:100%;
+  }
+  .campo :is(input:not([type="checkbox"]):not([type="radio"]), select),
+  .filtros :is(input:not([type="checkbox"]):not([type="radio"]), select){
+    min-height:44px;
+    height:44px;
+  }
+  .campo textarea{height:auto;min-height:92px;max-height:none}
+  /* Botões de ação recebem o mesmo corpo tipográfico dos campos. */
+  .botao,.acoes-registro .botao,.confirmacao-acoes .botao,
+  .filtros :is(button.botao,a.botao),.botao-texto,
+  .titulo-pagina > .botao,.cartao .topo-cartao .botao{
+    font-size:16px;
+    line-height:1.2;
+    letter-spacing:-.025em;
+  }
+  .botao{min-height:44px;padding:9px 10px;white-space:nowrap;max-width:100%}
+  .acoes-registro .botao{min-height:42px;padding:8px 9px}
+  .filtros{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px}
+  .filtros .campo{width:auto;min-width:0;flex:1 1 146px}
+  .filtros .campo:has(.entrada-competencia){flex:0 0 128px;max-width:128px}
+  .filtros .entrada-competencia,.entrada-competencia{
+    min-width:112px!important;max-width:128px!important;
+    font-size:16px!important;font-variant-numeric:tabular-nums;
+  }
+  .filtros > :is(a.botao,button.botao),
+  .filtros > form > :is(a.botao,button.botao){flex:0 0 auto;min-width:0}
+  .filtros form{min-width:0;align-items:flex-end}
+  /* Preserva alinhamento dos botões nas fichas verticais mobile. */
+  .tabela tbody td[data-rotulo="Ações"] .acoes-registro,
+  .tabela tbody td[data-rotulo="Ação"] .acoes-registro{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    align-items:stretch;gap:7px;width:100%;
+  }
+  .tabela tbody td[data-rotulo="Ações"] .acoes-registro > *,
+  .tabela tbody td[data-rotulo="Ação"] .acoes-registro > *{min-width:0;width:100%}
+  .tabela tbody td[data-rotulo="Ações"] .acoes-registro .botao,
+  .tabela tbody td[data-rotulo="Ação"] .acoes-registro .botao{
+    width:100%;min-height:44px;padding:8px 5px;
+    font-size:16px;line-height:1.2;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .tabela tbody td[data-rotulo="Ações"] .acoes-registro > :only-child,
+  .tabela tbody td[data-rotulo="Ação"] .acoes-registro > :only-child{grid-column:1/-1}
+  .confirmacao-acoes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .confirmacao-acoes .botao{width:100%;min-width:0;min-height:44px;white-space:nowrap}
+}

@@ -38,3 +38,10 @@
 @media (max-width:800px){.on-login-fundo{padding:0;background:#fff}.on-login-quadro{border:0;box-shadow:none;border-radius:0;min-height:100dvh}.on-login-conteudo{grid-template-columns:1fr}.on-login-institucional{display:none}.on-login-painel{padding:clamp(24px,6vw,45px) clamp(20px,7vw,60px) max(30px,env(safe-area-inset-bottom));min-height:100dvh;justify-content:center}.on-login-logo{height:105px}.on-login-painel h2{font-size:25px}.on-login-subtitulo{margin-bottom:32px}.on-login-rodape{margin-top:45px}}
 @media (max-height:740px) and (min-width:801px){.on-login-fundo{padding:12px}.on-login-quadro{min-height:calc(100dvh - 24px)}.on-login-institucional{min-height:640px}.on-login-painel{padding:24px 42px}.on-login-logo{height:76px;margin-bottom:7px}.on-login-subtitulo{margin-bottom:22px}.on-login-formulario{gap:15px}.on-login-separador{margin:15px 0}.on-login-rodape{margin-top:20px}}
 @media (prefers-reduced-motion:reduce){.on-login-entrar,.on-login-entrada{transition:none}}
+
+/* v0.9.3 — Evita zoom automático no login pelo Safari do iPhone. */
+@media(max-width:800px){
+  .on-login-entrada input{font-size:16px!important;line-height:1.25}
+  .on-login-entrar,.on-login-link,.on-login-id{font-size:16px}
+  .on-login-entrada{min-height:53px}
+}
