@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: { default: 'On Contabilidade', template: '%s | On Contabilidade' },
   description: 'Gestão contábil e financeira da On Contabilidade',
   applicationName: 'On ERP',
-  icons: { icon: '/icons/on-erp.svg' },
+  icons: { icon: [{ url: '/favicon.ico', sizes: 'any' }, { url: '/icons/on-erp.svg', type: 'image/svg+xml' }], apple: '/icons/apple-touch-icon.png' },
 };
 export const viewport: Viewport = { themeColor: '#0A111C', width: 'device-width', initialScale: 1 };
 export default function LayoutRaiz({ children }: Readonly<{ children: React.ReactNode }>) {
