@@ -94,7 +94,7 @@ export default function Entrar() {
 
           <div className="on-login-painel">
             <img
-              src="/marca/on-contabilidade-clara.svg"
+              src="/marca/on-contabilidade-escura.svg"
               className="on-login-logo"
               alt="On Contabilidade"
             />
