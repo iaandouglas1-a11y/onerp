@@ -64,3 +64,169 @@
 .confirmacao-janela h2{margin:10px 0 8px;font-size:18px;font-weight:550}.confirmacao-janela p{font-size:13px;line-height:1.55;color:#617083;margin:0 0 22px}
 .confirmacao-topo{display:flex;justify-content:space-between;align-items:center}.confirmacao-icone{display:grid;place-items:center;width:36px;height:36px;border-radius:9px;background:#fff2f1;color:#b23b31}
 .confirmacao-acoes{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}.confirmacao-acoes .botao.perigo{background:#aa3434;color:#fff;border-color:#aa3434}.confirmacao-acoes .botao.perigo:hover{background:#8f2727}
+
+/* v0.8.1 — usabilidade móvel: consultas, navegação e formulários.
+   Não altera o layout operacional do desktop nem as regras de negócio. */
+.titulo-topo-mobile{display:none}
+.fundo-menu-movel{display:none}
+@media (max-width:800px){
+  html{scroll-padding-top:72px;-webkit-text-size-adjust:100%}
+  body{overflow-x:hidden}
+  .app{min-height:100dvh}
+  .principal{min-width:0;width:100%}
+  .topo{position:sticky;top:0;z-index:35;height:60px;min-height:60px;padding:0 16px 0 66px;background:rgba(255,255,255,.96);backdrop-filter:blur(12px);box-shadow:0 1px 0 rgba(10,17,28,.04);justify-content:space-between}
+  .titulo-topo-mobile{display:block;font-weight:600;font-size:16px;letter-spacing:-.04em;color:var(--noite)}
+  .topo-direita{gap:12px}
+  .topo-direita>svg{width:18px;height:18px}
+  .botao-menu-mobile{display:flex;position:fixed;top:10px;left:12px;z-index:52;align-items:center;justify-content:center;width:40px;height:40px;border:1px solid var(--borda);border-radius:10px;background:#fff;color:var(--noite);box-shadow:0 2px 12px rgba(10,17,28,.06)}
+  .botao-menu-mobile:focus-visible,.navegacao-mobile button:focus-visible,.gaveta-menu-cabecalho button:focus-visible{outline:2px solid var(--verde);outline-offset:2px}
+  .fundo-menu-movel{display:flex;position:fixed;inset:0;z-index:110;background:rgba(10,17,28,.65);backdrop-filter:blur(2px)}
+  .gaveta-menu-movel{background:var(--noite);color:#e3e9ef;width:min(88vw,350px);height:100dvh;overflow-y:auto;overscroll-behavior:contain;padding:14px 14px max(22px,env(safe-area-inset-bottom));box-shadow:12px 0 48px rgba(0,0,0,.19)}
+  .gaveta-menu-cabecalho{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#c6d0d9;padding:2px 4px 8px;font-size:12px;letter-spacing:.04em}
+  .gaveta-menu-cabecalho button{border:0;background:rgba(255,255,255,.10);color:#fff;width:38px;height:38px;display:grid;place-items:center;border-radius:9px}
+  .gaveta-menu-movel .marca{min-height:84px;justify-content:flex-start;padding:0 4px 10px}
+  .gaveta-menu-movel .marca img{width:144px;height:80px;object-fit:contain}
+  .gaveta-menu-movel .titulo-menu{padding-top:10px}
+  .gaveta-menu-movel .link-menu{min-height:46px;font-size:14px}
+  .gaveta-menu-movel .subitem-menu{min-height:40px;font-size:13px}
+  .gaveta-menu-movel .rodape-menu{padding-top:16px;margin-top:22px}
+  .navegacao-mobile{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;gap:2px;z-index:70;min-height:62px;padding:7px 5px calc(7px + env(safe-area-inset-bottom));box-shadow:0 -3px 20px rgba(10,17,28,.09)}
+  .navegacao-mobile a,.navegacao-mobile button{color:#b9c4cc;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:0;min-height:47px;padding:4px 1px;border:0;background:transparent;font:inherit;font-size:10px;line-height:1.05;white-space:nowrap}
+  .navegacao-mobile a.ativo,.navegacao-mobile button.ativo{color:var(--verde)}
+  .navegacao-mobile svg{height:20px;width:20px;stroke-width:1.75}
+  .conteudo{width:100%;padding:20px 12px calc(106px + env(safe-area-inset-bottom));overflow-wrap:anywhere}
+  .titulo-pagina{display:flex;flex-wrap:wrap;align-items:flex-start;gap:12px;margin-bottom:16px}
+  .titulo-pagina h1{font-size:22px;line-height:1.24}
+  .titulo-pagina p{line-height:1.45}
+  .titulo-pagina>.botao{min-height:42px}
+  .cartao{padding:15px 13px;border-radius:12px;max-width:100%;min-width:0}
+  .cartao .topo-cartao{flex-wrap:wrap;align-items:flex-start;gap:10px;margin-bottom:14px}
+  .cartao .topo-cartao>div{min-width:0}
+  .cartao .topo-cartao .botao{min-height:39px}
+  .indicador .valor{font-size:24px}
+  .grade{gap:10px}
+  .colunas-2,.colunas-3,.colunas-4{grid-template-columns:minmax(0,1fr)}
+  .grade-formulario{grid-template-columns:minmax(0,1fr);gap:13px}
+  .campo,.filtros .campo{min-width:0;width:100%;max-width:100%}
+  .campo input,.campo select,.campo textarea,.entrada{font-size:16px;min-height:44px}
+  .entrada-competencia{max-width:100%}
+  .filtros{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;align-items:stretch}
+  .filtros>*,.filtros form,.filtros select,.filtros .botao{min-width:0;max-width:100%}
+  .filtros .botao{min-height:42px}
+  .linha{gap:9px}
+  .botao{min-height:42px;white-space:normal;text-align:center}
+  .tabela-wrapper{max-width:100%;width:100%;overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;scrollbar-width:thin;border-radius:9px}
+  .tabela{min-width:640px;width:max-content;max-width:none}
+  .tabela th,.tabela td{padding:12px 10px}
+  .tabela-gerenciamento{min-width:820px}
+  .acoes-registro{min-width:0;justify-content:flex-start;gap:6px;flex-wrap:nowrap}
+  .acoes-registro .botao{min-height:36px;padding:7px 10px}
+  .abas{scrollbar-width:thin;scroll-snap-type:x proximity;overscroll-behavior-x:contain;gap:0}
+  .aba{scroll-snap-align:start;min-height:44px;display:flex;align-items:center;padding:12px 14px}
+  .quadro-tarefas{grid-template-columns:repeat(4,minmax(235px,1fr));overflow-x:auto;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;padding-bottom:8px;scroll-snap-type:x proximity}
+  .coluna-tarefas{scroll-snap-align:start}
+  .modal-fundo{padding:0;align-items:flex-end;z-index:120}
+  .modal-janela,.modal-ampla{width:100%;max-width:100%;max-height:calc(100dvh - 24px);border-radius:17px 17px 0 0}
+  .modal-cabecalho{padding:16px 16px 14px}
+  .modal-corpo{padding:17px 15px calc(22px + env(safe-area-inset-bottom));overflow-x:hidden}
+  .modal-corpo .tabela-wrapper{overflow-x:auto}
+  .modal-fechar{width:40px;height:40px}
+  .confirmacao-fundo{z-index:300;padding:14px}
+  .confirmacao-janela{width:100%;max-width:430px;padding:18px}
+  .confirmacao-acoes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .confirmacao-acoes .botao{min-width:0;white-space:normal}
+  .visivel-desktop{display:none}
+}
+@media(min-width:520px) and (max-width:800px){
+  .conteudo{padding-left:20px;padding-right:20px}
+  .colunas-4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grade-formulario{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grade-formulario .largo{grid-column:1/-1}
+}
+@media(max-width:360px){
+  .conteudo{padding-left:9px;padding-right:9px}
+  .cartao{padding:12px 10px}
+  .navegacao-mobile a,.navegacao-mobile button{font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){.gaveta-menu-movel,.navegacao-mobile *{transition:none!important}}
+
+
+/* v0.8.2 — Consulta mobile sem rolagem lateral e navegação protegida pela safe-area.
+   Regras restritas ao mobile; no desktop a tabela e a navegação continuam originais. */
+@media (max-width:800px){
+  :root{--altura-barra-mobile:76px;--respiro-gestos-mobile:max(24px,env(safe-area-inset-bottom,24px))}
+  .navegacao-mobile{
+    display:grid;grid-template-columns:repeat(6,minmax(0,1fr));
+    position:fixed;left:0;right:0;bottom:0;z-index:70;
+    min-height:calc(var(--altura-barra-mobile) + var(--respiro-gestos-mobile));
+    padding:8px max(5px,env(safe-area-inset-right,0px)) var(--respiro-gestos-mobile) max(5px,env(safe-area-inset-left,0px));
+    gap:0;align-items:stretch;background:var(--noite);
+    border-top:1px solid rgba(255,255,255,.09);
+    box-shadow:0 -6px 25px rgba(10,17,28,.14)
+  }
+  .navegacao-mobile a,.navegacao-mobile button{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    min-width:0;min-height:65px;padding:8px 0 7px;gap:6px;
+    border-radius:10px;border:0;background:transparent;
+    font-size:10px;font-weight:500;line-height:1.1;color:#c5ced8;
+    white-space:nowrap;overflow:hidden;text-overflow:clip;
+    -webkit-tap-highlight-color:transparent
+  }
+  .navegacao-mobile a span,.navegacao-mobile button span{display:block;white-space:nowrap;font-size:inherit;letter-spacing:-.02em}
+  .navegacao-mobile svg{height:23px;width:23px;flex:none;stroke-width:1.7}
+  .navegacao-mobile a.ativo,.navegacao-mobile button.ativo{color:#b0e586;background:rgba(124,185,60,.12)}
+  .navegacao-mobile a:active,.navegacao-mobile button:active{background:rgba(255,255,255,.08)}
+  .conteudo{padding-bottom:calc(var(--altura-barra-mobile) + var(--respiro-gestos-mobile) + 28px);overflow-wrap:normal;word-break:normal}
+  .gaveta-menu-movel{padding-bottom:calc(var(--respiro-gestos-mobile) + 16px)}
+  .campo input,.campo select,.campo textarea,.entrada{max-width:100%;min-width:0}
+  .filtros{display:flex;flex-wrap:wrap;align-items:end;gap:8px}
+  .filtros .campo{flex:1 1 142px;max-width:100%;width:auto;min-width:0}
+  .filtros > button,.filtros > a,.filtros > form > button,.filtros > form > a{flex:0 0 auto;min-height:42px;max-width:100%;width:auto}
+  .filtros form{flex:1 1 auto;max-width:100%;display:flex;align-items:end;flex-wrap:wrap;gap:8px}
+  .entrada-competencia{max-width:160px;min-width:112px;font-variant-numeric:tabular-nums}
+  .titulo-pagina{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  .titulo-pagina h1{font-size:21px;overflow-wrap:normal;word-break:normal}
+  .titulo-pagina > .botao,.cartao .topo-cartao .botao,.linha > .botao{flex:0 0 auto;max-width:100%}
+  .botao{white-space:nowrap;word-break:normal;overflow-wrap:normal;font-size:12px;padding:9px 11px;min-height:42px;max-width:100%}
+  .botao svg{flex-shrink:0}
+  .linha{gap:8px}
+  .cartao .topo-cartao{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .cartao .topo-cartao h2{min-width:0;flex:1 1 auto}
+  .item-lista,.metrica-lista{min-width:0;flex-wrap:wrap}
+  .item-lista .nome-item,.metrica-lista strong{overflow-wrap:normal;word-break:normal}
+  .sem-quebra{white-space:nowrap!important;overflow-wrap:normal!important;word-break:normal!important}
+  .acoes-registro{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:6px;width:100%;min-width:0}
+  .acoes-registro .botao{white-space:nowrap;min-height:36px;padding:7px 10px}
+  .acoes-registro form{display:inline-flex;max-width:100%}
+  /* Cada registro é um cartão vertical. Os títulos das colunas aparecem como rótulos,
+     preenchidos pelo componente de apresentação TabelasMoveis. */
+  .tabela-wrapper{width:100%;max-width:100%;overflow-x:visible;overflow-y:visible;touch-action:auto;border-radius:0}
+  .tabela,.tabela-gerenciamento{display:block;width:100%!important;min-width:0!important;max-width:100%!important;border-collapse:separate}
+  .tabela thead{display:none}
+  .tabela tbody{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;width:100%;min-width:0}
+  .tabela tbody tr{display:block;min-width:0;width:100%;border:1px solid var(--borda);border-radius:11px;background:#fff;padding:8px 12px;box-shadow:0 2px 9px rgba(10,17,28,.025)}
+  .tabela tbody td,.tabela tbody td:first-child{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:9px;
+    width:100%;max-width:100%;min-width:0;min-height:30px;
+    padding:7px 0;font-size:12px;line-height:1.35;
+    border-bottom:1px solid #eef0f2;white-space:normal!important;
+    word-break:normal;overflow-wrap:normal;text-align:right
+  }
+  .tabela tbody td:last-child{border-bottom:none}
+  .tabela tbody td::before{content:attr(data-rotulo);flex:0 0 37%;max-width:37%;font-size:11px;font-weight:500;color:#6a788b;text-align:left;white-space:normal}
+  .tabela tbody td:first-child{font-weight:550;color:var(--noite)}
+  .tabela tbody td > *{max-width:100%;min-width:0}
+  .tabela tbody td[data-rotulo*="CNPJ"],.tabela tbody td[data-rotulo*="CPF"],.tabela tbody td[data-rotulo="Documento"]{white-space:nowrap!important;font-variant-numeric:tabular-nums;font-size:11px}
+  .tabela tbody td[data-rotulo="Ações"],.tabela tbody td[data-rotulo="Ação"]{align-items:center}
+  .tabela tbody td[data-rotulo="Ações"] .acoes-registro,.tabela tbody td[data-rotulo="Ação"] .acoes-registro{width:auto;flex:1 1 auto}
+  .tabela tbody tr:hover{background:#fff}
+  .quadro-tarefas{display:flex;flex-direction:column;overflow:visible;gap:12px;padding-bottom:0;scroll-snap-type:none}
+  .coluna-tarefas{width:100%;min-width:0;scroll-snap-align:none}
+  .modal-corpo .tabela-wrapper{overflow-x:visible}
+}
+@media(max-width:370px){
+  .navegacao-mobile a,.navegacao-mobile button{font-size:9px}
+  .navegacao-mobile svg{width:21px;height:21px}
+  .tabela tbody td::before{flex-basis:34%;max-width:34%}
+  .conteudo{padding-left:10px;padding-right:10px}
+}

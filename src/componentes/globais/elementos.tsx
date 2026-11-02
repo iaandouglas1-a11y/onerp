@@ -2,8 +2,13 @@ import { type ReactNode } from 'react';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 import { EntradaCompetencia } from '@/componentes/globais/competencia';
+function descreverSemQuebrarDocumento(descricao: string) {
+  const partes = descricao.split(/(\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b|\b\d{3}\.\d{3}\.\d{3}-\d{2}\b)/g);
+  return partes.map((parte, indice) => /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$|^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(parte)
+    ? <span className="sem-quebra" key={indice}>{parte}</span> : parte);
+}
 export function CabecalhoPagina({ titulo, descricao, acao, rotaAcao }: {titulo:string;descricao?:string;acao?:string;rotaAcao?:string}) {
-  return <div className="titulo-pagina linha entre"><div><h1>{titulo}</h1>{descricao&&<p>{descricao}</p>}</div>{acao&&rotaAcao&&<Link className="botao primario" href={rotaAcao}><Plus size={15}/>{acao}</Link>}</div>;
+  return <div className="titulo-pagina linha entre"><div><h1>{titulo}</h1>{descricao&&<p>{descreverSemQuebrarDocumento(descricao)}</p>}</div>{acao&&rotaAcao&&<Link className="botao primario" href={rotaAcao}><Plus size={15}/>{acao}</Link>}</div>;
 }
 export function Cartao({titulo,subtitulo,acoes,children}:{titulo?:string;subtitulo?:string;acoes?:ReactNode;children:ReactNode}) {
   return <section className="cartao">{titulo&&<div className="topo-cartao"><div><h2>{titulo}</h2>{subtitulo&&<p className="muted pequeno">{subtitulo}</p>}</div>{acoes}</div>}{children}</section>;

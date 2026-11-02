@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState, type ComponentType, type PointerEvent, type KeyboardEvent } from 'react';
-import { LayoutDashboard, Building2, ReceiptText, BookOpen, UsersRound, Wallet, Settings2, ListTodo, LogOut, ChevronDown, ChevronRight, FolderOpen, LockKeyhole } from 'lucide-react';
+import { LayoutDashboard, Building2, ReceiptText, BookOpen, UsersRound, Wallet, Settings2, ListTodo, LogOut, ChevronDown, ChevronRight, LockKeyhole, Menu, X } from 'lucide-react';
 import { criarClienteNavegador } from '@/lib/supabase/navegador';
 
 type IconeMenu=ComponentType<{size?:number;strokeWidth?:number}>;
@@ -34,6 +34,7 @@ const limitarLargura=(valor:number)=>Math.min(LARGURA_MAXIMA,Math.max(LARGURA_MI
 
 export function Navegacao(){
   const caminho=usePathname();
+  const [menuMovelAberto, definirMenuMovelAberto] = useState(false);
   const [larguraLateral,definirLarguraLateral]=useState(LARGURA_PADRAO);
   const [preferenciaCarregada,definirPreferenciaCarregada]=useState(false);
   const arrasto=useRef<{x:number;largura:number}|null>(null);
@@ -75,21 +76,43 @@ export function Navegacao(){
     definirLarguraLateral(limitarLargura(novaLargura));
   }
 
+  useEffect(()=>{definirMenuMovelAberto(false);},[caminho]);
+  useEffect(()=>{if(!menuMovelAberto)return;const antes=document.body.style.overflow;document.body.style.overflow='hidden';const sair=(evento:globalThis.KeyboardEvent)=>{if(evento.key==='Escape')definirMenuMovelAberto(false);};document.addEventListener('keydown',sair);return()=>{document.body.style.overflow=antes;document.removeEventListener('keydown',sair);};},[menuMovelAberto]);
   const [abertos,definirAbertos]=useState<string[]>(()=>modulos.filter(item=>caminho.startsWith(`/${item.chave}`)).map(item=>item.chave));
   function alternar(chave:string){definirAbertos(atuais=>atuais.includes(chave)?atuais.filter(item=>item!==chave):[...atuais,chave]);}
-  return <><aside className="lateral" style={{width:larguraLateral,flexBasis:larguraLateral}}><Link className="marca" href="/inicio" aria-label="On Contabilidade — início"><img src="/marca/on-contabilidade-clara.svg" alt="On Contabilidade"/></Link>
-    <div className="titulo-menu">NAVEGAÇÃO</div><nav aria-label="Módulos do ERP">
-      <Link href="/inicio" className={`link-menu ${caminho==='/inicio'?'ativo':''}`}><LayoutDashboard/>Dashboard</Link>
+  const conteudoMenu = <>
+    <Link className="marca" href="/inicio" aria-label="On Contabilidade — início" onClick={()=>definirMenuMovelAberto(false)}><img src="/marca/on-contabilidade-clara.svg" alt="On Contabilidade"/></Link>
+    <div className="titulo-menu">NAVEGAÇÃO</div>
+    <nav aria-label="Módulos do ERP">
+      <Link href="/inicio" onClick={()=>definirMenuMovelAberto(false)} className={`link-menu ${caminho==='/inicio'?'ativo':''}`}><LayoutDashboard/>Dashboard</Link>
       {modulos.map(modulo=>{const Icone=modulo.icone;const aberto=abertos.includes(modulo.chave);const ativo=caminho.startsWith(`/${modulo.chave}`);
         return <div className="grupo-menu" key={modulo.chave}>
           <button type="button" aria-expanded={aberto} className={`link-menu botao-modulo ${ativo?'ativo':''}`} onClick={()=>alternar(modulo.chave)}><Icone/><span>{modulo.titulo}</span>{aberto?<ChevronDown className="seta-menu"/>:<ChevronRight className="seta-menu"/>}</button>
-          {aberto&&<div className="submenu" aria-label={`Funções de ${modulo.titulo}`}>{modulo.funcoes.map(funcao=>funcao.rota?<Link key={funcao.titulo} href={funcao.rota} className={`subitem-menu ${caminho===funcao.rota?'ativo':''}`}>{funcao.titulo}</Link>:<span key={funcao.titulo} className="subitem-menu desabilitado" title="Funcionalidade ainda não disponível">{funcao.titulo}<LockKeyhole size={11}/></span>)}</div>}
+          {aberto&&<div className="submenu" aria-label={`Funções de ${modulo.titulo}`}>{modulo.funcoes.map(funcao=>funcao.rota?<Link key={funcao.titulo} onClick={()=>definirMenuMovelAberto(false)} href={funcao.rota} className={`subitem-menu ${caminho===funcao.rota||caminho.startsWith(funcao.rota+'/')?'ativo':''}`}>{funcao.titulo}</Link>:<span key={funcao.titulo} className="subitem-menu desabilitado" title="Funcionalidade ainda não disponível">{funcao.titulo}<LockKeyhole size={11}/></span>)}</div>}
         </div>;
       })}
-      <Link href="/configuracoes" className={`link-menu ${caminho.startsWith('/configuracoes')?'ativo':''}`}><Settings2/>Configurações</Link>
+      <Link href="/configuracoes" onClick={()=>definirMenuMovelAberto(false)} className={`link-menu ${caminho.startsWith('/configuracoes')?'ativo':''}`}><Settings2/>Configurações</Link>
     </nav>
-    <div className="rodape-menu"><button className="botao" type="button" onClick={async()=>{await criarClienteNavegador().auth.signOut();window.location.assign('/entrar');}}><LogOut size={14}/> Encerrar sessão</button><p style={{marginTop:15}}>On Contabilidade</p></div>
-    <div className="redimensionador-lateral" role="separator" aria-label="Redimensionar menu lateral" aria-orientation="vertical" aria-controls="conteudo-principal" aria-valuemin={LARGURA_MINIMA} aria-valuemax={LARGURA_MAXIMA} aria-valuenow={larguraLateral} tabIndex={0} title="Arraste para ajustar a largura do menu" onPointerDown={iniciarArrasto} onPointerMove={moverDivisor} onPointerUp={finalizarArrasto} onPointerCancel={finalizarArrasto} onKeyDown={atalhosDivisor}/>
-  </aside>
-  <nav className="navegacao-mobile" aria-label="Navegação móvel">{[{rota:'/inicio',titulo:'Início',icone:LayoutDashboard},{rota:'/societario/clientes',titulo:'Societário',icone:Building2},{rota:'/fiscal/faturamento',titulo:'Fiscal',icone:ReceiptText},{rota:'/societario/tarefas',titulo:'Tarefas',icone:ListTodo},{rota:'/financeiro',titulo:'Financeiro',icone:Wallet},{rota:'/configuracoes',titulo:'Ajustes',icone:Settings2}].map(item=>{const Icone=item.icone;return <Link key={item.rota} href={item.rota} className={caminho===item.rota?'ativo':''}><Icone/>{item.titulo}</Link>})}</nav></>;
+    <div className="rodape-menu"><button className="botao" type="button" onClick={async()=>{await criarClienteNavegador().auth.signOut();window.location.assign('/entrar');}}><LogOut size={14}/> Encerrar sessão</button></div>
+  </>;
+  const atalhosMoveis=[
+    {chave:'inicio',rota:'/inicio',titulo:'Início',icone:LayoutDashboard},
+    {chave:'societario',rota:'/societario',titulo:'Societário',icone:Building2},
+    {chave:'fiscal',rota:'/fiscal',titulo:'Fiscal',icone:ReceiptText},
+    {chave:'contabil',rota:null,titulo:'Contábil',icone:BookOpen},
+    {chave:'folha',rota:'/folha',titulo:'Folha',icone:UsersRound},
+    {chave:'financeiro',rota:'/financeiro',titulo:'Financeiro',icone:Wallet},
+  ];
+  function abrirModuloPendente(chave:string){
+    definirAbertos(atuais=>atuais.includes(chave)?atuais:[...atuais,chave]);
+    definirMenuMovelAberto(true);
+  }
+  return <>
+    <aside className="lateral" style={{width:larguraLateral,flexBasis:larguraLateral}}>{conteudoMenu}
+      <div className="redimensionador-lateral" role="separator" aria-label="Redimensionar menu lateral" aria-orientation="vertical" aria-controls="conteudo-principal" aria-valuemin={LARGURA_MINIMA} aria-valuemax={LARGURA_MAXIMA} aria-valuenow={larguraLateral} tabIndex={0} title="Arraste para ajustar a largura do menu" onPointerDown={iniciarArrasto} onPointerMove={moverDivisor} onPointerUp={finalizarArrasto} onPointerCancel={finalizarArrasto} onKeyDown={atalhosDivisor}/>
+    </aside>
+    <button className="botao-menu-mobile" type="button" onClick={()=>definirMenuMovelAberto(true)} aria-label="Abrir menu de módulos" aria-expanded={menuMovelAberto} aria-controls="menu-movel"><Menu size={22}/></button>
+    {menuMovelAberto&&<div className="fundo-menu-movel" onMouseDown={evento=>{if(evento.target===evento.currentTarget)definirMenuMovelAberto(false);}}><aside id="menu-movel" className="gaveta-menu-movel" aria-label="Menu principal"><div className="gaveta-menu-cabecalho"><span>Módulos e funções</span><button type="button" onClick={()=>definirMenuMovelAberto(false)} aria-label="Fechar menu"><X size={22}/></button></div>{conteudoMenu}</aside></div>}
+    <nav className="navegacao-mobile" aria-label="Módulos principais">{atalhosMoveis.map(item=>{const Icone=item.icone;const ativo=item.chave==='inicio'?caminho==='/inicio':caminho===`/${item.chave}`||caminho.startsWith(`/${item.chave}/`);return item.rota?<Link key={item.chave} href={item.rota} className={ativo?'ativo':''} aria-current={ativo?'page':undefined}><Icone aria-hidden="true"/><span>{item.titulo}</span></Link>:<button key={item.chave} type="button" className={menuMovelAberto&&abertos.includes(item.chave)?'ativo':''} onClick={()=>abrirModuloPendente(item.chave)} aria-label="Contábil — consultar funções no menu"><Icone aria-hidden="true"/><span>{item.titulo}</span></button>})}</nav>
+  </>;
 }
