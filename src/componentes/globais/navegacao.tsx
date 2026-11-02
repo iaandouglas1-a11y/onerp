@@ -20,7 +20,7 @@ const modulos:ModuloMenu[]=[
     {titulo:'Faturamento MEI',rota:'/fiscal/faturamento/mei'},
     {titulo:'Faturamento convencional',rota:'/fiscal/faturamento/convencional'},
     {titulo:'Categorias',rota:'/fiscal/categorias'},
-    {titulo:'Documentos fiscais'}, {titulo:'DAS MEI'}, {titulo:'DASN-SIMEI'},
+    {titulo:'Documentos fiscais',rota:'/fiscal/documentos'}, {titulo:'DAS MEI',rota:'/fiscal/das-mei'}, {titulo:'DASN-SIMEI',rota:'/fiscal/dasn-simei'},
   ]},
   {chave:'contabil',titulo:'Contábil',icone:BookOpen,funcoes:[{titulo:'Plano de contas'},{titulo:'Lançamentos'},{titulo:'Conciliação bancária'},{titulo:'Demonstrativos'}]},
   {chave:'folha',titulo:'Folha de pagamento',icone:UsersRound,funcoes:[{titulo:'Empregados',rota:'/folha/empregados'},{titulo:'Eventos',rota:'/folha/eventos'},{titulo:'Lançamentos',rota:'/folha/lancamentos'},{titulo:'Contracheques',rota:'/folha/contracheques'},{titulo:'Férias'}]},
