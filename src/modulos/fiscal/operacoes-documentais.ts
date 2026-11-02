@@ -160,11 +160,26 @@ export async function salvarDeclaracaoMei(dados:FormData){
 
 export async function obterArquivoFiscal(tipo:'xml'|'das'|'dasn',id:string){
   const {banco,escritorioId}=await exigirEscritorio();validarUuid(id,'Documento');
-  const tabela=tipo==='xml'?'documentos_fiscais':tipo==='das'?'competencias_das_mei':'declaracoes_anuais_mei';
-  const coluna=tipo==='xml'?'caminho_arquivo':tipo==='das'?'caminho_guia':'caminho_recibo';
-  const {data,error:erro}=await banco.from(tabela).select(`id,${coluna}`).eq('id',id).eq('escritorio_id',escritorioId).maybeSingle();
-  conferirErro(erro,'Localizar arquivo fiscal');
-  const caminho=data?.[coluna];if(typeof caminho!=='string'||!caminho)throw new Error('Arquivo não anexado a este registro.');
+  // Consultas tipadas por tipo documental: evita indexar uma união de resultados
+  // com uma chave dinâmica que não existe em todos os seus membros.
+  let caminho: string | null | undefined;
+  if (tipo === 'xml') {
+    const {data,error:erro}=await banco.from('documentos_fiscais')
+      .select('id,caminho_arquivo').eq('id',id).eq('escritorio_id',escritorioId).maybeSingle();
+    conferirErro(erro,'Localizar arquivo fiscal');
+    caminho=data?.caminho_arquivo;
+  } else if (tipo === 'das') {
+    const {data,error:erro}=await banco.from('competencias_das_mei')
+      .select('id,caminho_guia').eq('id',id).eq('escritorio_id',escritorioId).maybeSingle();
+    conferirErro(erro,'Localizar arquivo fiscal');
+    caminho=data?.caminho_guia;
+  } else {
+    const {data,error:erro}=await banco.from('declaracoes_anuais_mei')
+      .select('id,caminho_recibo').eq('id',id).eq('escritorio_id',escritorioId).maybeSingle();
+    conferirErro(erro,'Localizar arquivo fiscal');
+    caminho=data?.caminho_recibo;
+  }
+  if(typeof caminho!=='string'||!caminho)throw new Error('Arquivo não anexado a este registro.');
   // Links assinados temporários sem URLs públicas e sem exposição de chave de serviço.
   const {data:assinatura,error:erroLink}=await banco.storage.from(BUCKET).createSignedUrl(caminho,60);
   conferirErro(erroLink,'Obter arquivo');
