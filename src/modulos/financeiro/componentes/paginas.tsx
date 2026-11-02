@@ -8,6 +8,7 @@ import {JanelasFinanceiras} from './janelas';
 import {BotaoAcaoFinanceira} from './botao-acao';
 import {cancelarCobranca,excluirCobranca,estornarRecebimento,cancelarDespesa,excluirDespesa,estornarPagamento,excluirMovimentoFinanceiro,excluirTransferencia} from '@/modulos/financeiro/acoes';
 import {moeda,mesAtual,mesValido,formatarCompetencia,dataBrasileira} from '@/lib/utilitarios/formatacao';
+import {compararTextos} from '@/lib/utilitarios/ordenacao';
 
 type Secao='honorarios'|'recebimentos'|'despesas'|'movimentacoes'|'contas'|'fluxo-de-caixa'|'relatorios';
 type Filtros={modal?:string;id?:string;competencia?:string;cliente?:string;conta?:string;ano?:string};
@@ -25,11 +26,18 @@ export async function PaginaModularFinanceira({secao,searchParams}:{secao:Secao;
  const base=`/financeiro/${secao}`;
  let pagina:ReactNode;
  if(secao==='honorarios'){
+  // Honorários não têm código próprio: cliente (A-Z), serviço (A-Z) e descrição (A-Z).
+  const honorariosOrdenados=[...dados.honorarios].sort((a,b)=>
+   compararTextos(clientes.get(a.cliente_id),clientes.get(b.cliente_id)) ||
+   compararTextos(servicos.get(a.servico_id||''),servicos.get(b.servico_id||'')) ||
+   compararTextos(a.descricao,b.descricao) ||
+   compararTextos(a.id,b.id)
+  );
   const ativos=dados.honorarios.filter(h=>h.ativo);
   pagina=<><CabecalhoPagina titulo="Honorários recorrentes" descricao="Contratos mensais por cliente e serviço, com geração de cobranças." acao="Novo honorário" rotaAcao={`${base}?modal=honorario`}/>
    <Indicadores itens={[{nome:'Contratos ativos',valor:ativos.length},{nome:'Total de contratos',valor:dados.honorarios.length},{nome:'Receita recorrente contratada',valor:moeda(ativos.reduce((s,h)=>s+Number(h.valor),0))},{nome:'Cobranças geradas',valor:dados.receber.filter(r=>r.contrato_honorarios_id).length}]}/>
    <Cartao titulo="Contratos de honorários" acoes={<Link href={`${base}?modal=gerar`} className="botao primario">Gerar cobranças da competência</Link>}>
-   {dados.honorarios.length===0?<ListaVazia/>:<Tabela cabecalho={['Cliente','Serviço','Descrição','Valor','Vencimento','Vigência','Situação','Ações']}>{dados.honorarios.map(h=><tr key={h.id}><td><Link href={`/financeiro/clientes/${h.cliente_id}`}>{clientes.get(h.cliente_id)||'—'}</Link></td><td>{servicos.get(h.servico_id||'')||'—'}</td><td>{h.descricao}</td><td>{moeda(h.valor)}</td><td>Dia {h.dia_vencimento||10}</td><td>{dataBrasileira(h.data_inicio)}{h.data_fim?` a ${dataBrasileira(h.data_fim)}`:''}</td><td><Etiqueta valor={h.ativo?'ATIVO':'INATIVO'}/></td><td><LinkEditar secao={secao} tipo="honorario" id={h.id}/></td></tr>)}</Tabela>}</Cartao>
+   {dados.honorarios.length===0?<ListaVazia/>:<Tabela cabecalho={['Cliente','Serviço','Descrição','Valor','Vencimento','Vigência','Situação','Ações']}>{honorariosOrdenados.map(h=><tr key={h.id}><td><Link href={`/financeiro/clientes/${h.cliente_id}`}>{clientes.get(h.cliente_id)||'—'}</Link></td><td>{servicos.get(h.servico_id||'')||'—'}</td><td>{h.descricao}</td><td>{moeda(h.valor)}</td><td>Dia {h.dia_vencimento||10}</td><td>{dataBrasileira(h.data_inicio)}{h.data_fim?` a ${dataBrasileira(h.data_fim)}`:''}</td><td><Etiqueta valor={h.ativo?'ATIVO':'INATIVO'}/></td><td><LinkEditar secao={secao} tipo="honorario" id={h.id}/></td></tr>)}</Tabela>}</Cartao>
    <div className="aviso-configuracao" style={{marginTop:12}}>A alteração do contrato não altera cobranças já emitidas. A geração por competência evita lançamentos duplicados.</div></>;
  }else if(secao==='recebimentos'){
   const registros=dados.receber.filter(r=>(!filtros.cliente||r.cliente_id===filtros.cliente)&&(!filtros.competencia||r.competencia?.startsWith(mes)));
