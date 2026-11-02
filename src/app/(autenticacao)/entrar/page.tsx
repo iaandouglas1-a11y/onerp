@@ -81,18 +81,14 @@ export default function Entrar() {
   return (
     <main className="on-login-fundo">
       <section className="on-login-quadro" aria-label="Acesso ao On ERP">
-        <div className="on-login-faixa" aria-hidden="true">
-          <img src="/icons/on-erp.svg" alt="" />
-          <span>On ERP</span>
-        </div>
-
         <div className="on-login-conteudo">
           <aside className="on-login-institucional">
             <div className="on-login-foto" aria-hidden="true" />
             <div className="on-login-texto">
+              <span className="on-login-selo">ON CONTABILIDADE · PLATAFORMA INTEGRADA</span>
               <h1>Controle, simplicidade e <strong>gestão integrada</strong> para o seu escritório.</h1>
               <span className="on-login-linha" aria-hidden="true" />
-              <p>Uma plataforma para conectar pessoas, processos e resultados.</p>
+              <p>Seu escritório conectado, com informações organizadas e mais tempo para decisões.</p>
             </div>
           </aside>
 
@@ -102,7 +98,7 @@ export default function Entrar() {
               className="on-login-logo"
               alt="On Contabilidade"
             />
-            <h2>{modo === 'entrar' ? 'Boas-vindas ao On ERP' : 'Recuperar acesso'}</h2>
+            <h2>{modo === 'entrar' ? 'Bem-vindo ao On ERP' : 'Recuperar acesso'}</h2>
             <p className="on-login-subtitulo">{modo === 'entrar' ? 'Gestão contábil e financeira' : 'Informe seu e-mail para receber o link de recuperação.'}</p>
 
             <form onSubmit={enviar} className="on-login-formulario">
