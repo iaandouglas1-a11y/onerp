@@ -4,6 +4,7 @@ import { JanelaModal } from '@/componentes/globais/janela-modal';
 import { FormularioContinuo } from '@/componentes/globais/formulario-continuo';
 import { exigirEscritorio } from '@/lib/seguranca/contexto';
 import { criarServico, editarServico, excluirServico } from '@/modulos/societario/acoes';
+import { ordenarCadastros } from '@/lib/utilitarios/ordenacao';
 
 type Parametros = { novo?: string; editar?: string; excluir?: string };
 
@@ -13,7 +14,7 @@ export default async function Servicos({searchParams}:{searchParams:Promise<Para
   const {data:servicos,error:erro}=await banco.from('servicos').select('*')
     .eq('escritorio_id',escritorioId).order('nome');
   if(erro)throw new Error(erro.message);
-  const lista=servicos??[];
+  const lista=ordenarCadastros(servicos??[], s=>s.codigo, s=>s.nome);
   const servicoEdicao=editar?lista.find(servico=>servico.id===editar):undefined;
   const servicoExclusao=excluir?lista.find(servico=>servico.id===excluir):undefined;
   const rota='/societario/servicos';

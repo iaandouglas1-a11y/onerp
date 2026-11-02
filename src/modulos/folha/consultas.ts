@@ -1,6 +1,7 @@
 import 'server-only';
 import { exigirEscritorio } from '@/lib/seguranca/contexto';
 import { consultarTodasPaginas } from '@/lib/utilitarios/paginacao';
+import { ordenarCadastros } from '@/lib/utilitarios/ordenacao';
 
 export type Empregado = {id:string;escritorio_id:string;cliente_id:string;nome_completo:string;cpf:string|null;
  codigo_funcionario:string|null;cargo:string|null;cbo:string|null;salario:number;divisor_horas_mensais:number|null;data_admissao:string;
@@ -15,12 +16,13 @@ export type ContrachequeFolha = {id:string;empregado_id:string;cliente_id:string
 
 export async function listarEmpregados(){
  const {banco,escritorioId}=await exigirEscritorio();
- return consultarTodasPaginas<Empregado>((inicio,fim)=>banco.from('empregados').select('*').eq('escritorio_id',escritorioId).order('nome_completo').range(inicio,fim));
+ const empregados=await consultarTodasPaginas<Empregado>((inicio,fim)=>banco.from('empregados').select('*').eq('escritorio_id',escritorioId).order('id').range(inicio,fim));
+ return ordenarCadastros(empregados, e=>e.codigo_funcionario, e=>e.nome_completo);
 }
 export async function listarEventosFolha(){
  const {banco,escritorioId}=await exigirEscritorio();
  const eventos=await consultarTodasPaginas<EventoFolha>((inicio,fim)=>banco.from('eventos_folha').select('*').eq('escritorio_id',escritorioId).order('codigo').range(inicio,fim));
- return eventos.sort((a,b)=>Number(a.codigo)-Number(b.codigo));
+ return ordenarCadastros(eventos, e=>e.codigo, e=>e.nome);
 }
 export async function listarLancamentosFolha(competencia:string){
  const {banco,escritorioId}=await exigirEscritorio();

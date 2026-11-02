@@ -9,6 +9,7 @@ import { obterContexto } from '@/lib/seguranca/contexto';
 import { JanelaModal } from '@/componentes/globais/janela-modal';
 import { FormularioContinuo } from '@/componentes/globais/formulario-continuo';
 import { Plus, Pencil } from 'lucide-react';
+import { ordenarPorDescricao } from '@/lib/utilitarios/ordenacao';
 
 type CampoConfigurado={nome:string;rotulo:string;tipo?:string;opcoes?:{valor:string;rotulo:string}[];obrigatorio?:boolean};
 const estadosTarefa=['A_FAZER','EM_EXECUCAO','AGUARDANDO_CLIENTE','CONCLUIDA','CANCELADA'];
@@ -51,7 +52,8 @@ export async function SecaoCliente({id,aba,editar}:{id:string;aba:string;editar?
     </>;
   }
   const configuracao=configuracoes[aba];if(!configuracao)return null;
-  const registros=await registrosCliente(configuracao.tabela,id);
+  const itensRecebidos=await registrosCliente(configuracao.tabela,id);
+  const registros=aba==='implantacao'?[...itensRecebidos].sort((a,b)=>Number(a.posicao??0)-Number(b.posicao??0)):aba==='observacoes'?itensRecebidos:ordenarPorDescricao(itensRecebidos,item=>item[configuracao.coluna]);
   const listaServicos=aba==='servicos'?await contexto.banco.from('servicos').select('id,nome').eq('escritorio_id',contexto.escritorioId!).order('nome'):null;
   const servicos=(listaServicos?.data??[]) as {id:string;nome:string}[];
   const mapaServicos=Object.fromEntries(servicos.map(servico=>[servico.id,servico.nome]));

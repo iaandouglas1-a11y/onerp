@@ -2,6 +2,7 @@ import 'server-only';
 import { exigirEscritorio } from '@/lib/seguranca/contexto';
 import { consultarTodasPaginas } from '@/lib/utilitarios/paginacao';
 import type { DadosFinanceiros } from './modelos';
+import { ordenarCadastros, ordenarPorDescricao } from '@/lib/utilitarios/ordenacao';
 
 // As nove consultas seguem o mesmo escritório e paginação sem limite implícito de 1.000 itens.
 export async function carregarFinanceiro():Promise<DadosFinanceiros>{
@@ -19,5 +20,5 @@ export async function carregarFinanceiro():Promise<DadosFinanceiros>{
   consultar<DadosFinanceiros['recebimentos'][number]>('recebimentos'),
   consultar<DadosFinanceiros['pagamentos'][number]>('pagamentos_contas_pagar'),
  ]);
- return {clientes,servicos,categorias,contas,honorarios,receber,pagar,movimentos,recebimentos,pagamentos};
+ return {clientes:ordenarPorDescricao(clientes,c=>c.razao_social),servicos:ordenarCadastros(servicos,s=>s.codigo,s=>s.nome),categorias:ordenarPorDescricao(categorias,c=>c.nome),contas:ordenarPorDescricao(contas,c=>c.nome),honorarios,receber,pagar,movimentos,recebimentos,pagamentos};
 }

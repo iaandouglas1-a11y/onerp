@@ -2,9 +2,11 @@ import 'server-only';
 import { exigirEscritorio } from '@/lib/seguranca/contexto';
 import type { Cliente } from '@/tipos/modelos';
 import { consultarTodasPaginas } from '@/lib/utilitarios/paginacao';
+import { ordenarPorDescricao } from '@/lib/utilitarios/ordenacao';
 export async function listarClientes() {
   const {banco,escritorioId}=await exigirEscritorio();
-  return consultarTodasPaginas<Cliente>((inicio,fim)=>banco.from('clientes').select('*').eq('escritorio_id',escritorioId).order('id').range(inicio,fim));
+  const clientes=await consultarTodasPaginas<Cliente>((inicio,fim)=>banco.from('clientes').select('*').eq('escritorio_id',escritorioId).order('id').range(inicio,fim));
+  return ordenarPorDescricao(clientes, cliente=>cliente.razao_social);
 }
 export async function buscarCliente(id:string) {
   const {banco,escritorioId}=await exigirEscritorio();
