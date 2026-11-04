@@ -23,7 +23,7 @@ const modulos:ModuloMenu[]=[
     {titulo:'Visão geral',funcoes:[{titulo:'Painel fiscal',rota:'/fiscal',destacar:false}]},
     {titulo:'Documentos fiscais',funcoes:[{titulo:'Consultar documentos',rota:'/fiscal/documentos'},{titulo:'Importar documentos',rota:'/fiscal/documentos?novo=1',destacar:false},{titulo:'Conferência e classificação'}]},
     {titulo:'Faturamento',funcoes:[{titulo:'Faturamento geral',rota:'/fiscal/faturamento'},{titulo:'Faturamento MEI',rota:'/fiscal/faturamento/mei'},{titulo:'Faturamento convencional',rota:'/fiscal/faturamento/convencional'}]},
-    {titulo:'Obrigações',funcoes:[{titulo:'DAS MEI',rota:'/fiscal/das-mei'},{titulo:'DASN-SIMEI',rota:'/fiscal/dasn-simei'}]},
+    {titulo:'Obrigações',funcoes:[{titulo:'DAS MEI',rota:'/fiscal/das-mei'},{titulo:'DASN-SIMEI',rota:'/fiscal/dasn-simei'},{titulo:'Débitos fiscais',rota:'/fiscal/debitos'}]},
     {titulo:'Configurações',funcoes:[{titulo:'Categorias fiscais',rota:'/fiscal/categorias'},{titulo:'Regras de classificação'}]},
   ]},
   {chave:'contabil',titulo:'Contábil',icone:BookOpen,grupos:[
