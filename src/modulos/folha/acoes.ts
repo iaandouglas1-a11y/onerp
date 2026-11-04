@@ -79,12 +79,50 @@ export async function salvarEvento(dados:FormData){
  else {const {error:erro}=await banco.from('eventos_folha').insert({escritorio_id:escritorioId,...registro});conferirErro(erro,'Cadastrar evento');}
  revalidatePath('/folha/eventos');return {sucesso:true,mensagem:'Evento salvo. Revise as incidências antes de utilizá-lo.'};
 }
+/** Mantém o recibo da competência sincronizado com os eventos correntes.
+ * Antes de recalcular, bloqueia o PDF antigo; em caso de falha o recibo
+ * permanece pendente, sem expor uma memória de cálculo desatualizada. */
+async function recalcularReciboAposEvento(
+ banco: Awaited<ReturnType<typeof exigirEdicao>>['banco'],
+ escritorioId:string, empregadoId:string, competencia:string
+){
+ const {data:recibo,error:erroConsulta}=await banco.from('contracheques_folha')
+  .select('id,situacao').eq('escritorio_id',escritorioId)
+  .eq('empregado_id',empregadoId).eq('competencia',competencia).maybeSingle();
+ conferirErro(erroConsulta,'Consultar contracheque');
+ if(!recibo)return; // A primeira geração continua sendo feita pelo processamento da empresa.
+ if(recibo.situacao==='CONFERIDO')throw new Error('Reabra a folha da empresa antes de modificar os eventos.');
+ const {error:erroPendencia}=await banco.from('contracheques_folha')
+  .update({situacao:'REPROCESSAMENTO_PENDENTE'})
+  .eq('id',recibo.id).eq('escritorio_id',escritorioId).neq('situacao','CONFERIDO');
+ conferirErro(erroPendencia,'Invalidar contracheque anterior');
+ const formulario=new FormData();
+ formulario.set('empregado_id',empregadoId);
+ formulario.set('competencia',competencia.slice(0,7));
+ await gerarContracheque(formulario);
+}
+
 export async function salvarLancamentoEvento(dados:FormData){
  const {banco,escritorioId,usuario}=await exigirEdicao();
  const empregadoId=uuid(textoObrigatorio(dados.get('empregado_id'),'Empregado'));
  const eventoId=uuid(textoObrigatorio(dados.get('evento_id'),'Evento'));
  const competencia=validarCompetencia(textoObrigatorio(dados.get('competencia'),'Competência'));
  const id=ler(dados,'id');if(id)uuid(id);
+ let origem:{empregado_id:string;competencia:string}|null=null;
+ if(id){
+  const {data:anterior,error:erroAnterior}=await banco.from('lancamentos_eventos_folha')
+   .select('empregado_id,competencia').eq('escritorio_id',escritorioId).eq('id',id).maybeSingle();
+  conferirErro(erroAnterior,'Consultar lançamento original');
+  if(!anterior)throw new Error('Lançamento não localizado para edição.');
+  origem=anterior;
+  if(origem.empregado_id!==empregadoId||origem.competencia!==competencia){
+   const {data:reciboOrigem,error:erroReciboOrigem}=await banco.from('contracheques_folha')
+    .select('situacao').eq('escritorio_id',escritorioId).eq('empregado_id',origem.empregado_id)
+    .eq('competencia',origem.competencia).maybeSingle();
+   conferirErro(erroReciboOrigem,'Consultar contracheque original');
+   if(reciboOrigem?.situacao==='CONFERIDO')throw new Error('Reabra a folha da competência original antes de transferir o lançamento.');
+  }
+ }
  const {data:empregado,error:erroEmpregado}=await banco.from('empregados').select('id,cliente_id,salario,divisor_horas_mensais').eq('escritorio_id',escritorioId).eq('id',empregadoId).maybeSingle();
  conferirErro(erroEmpregado,'Consultar empregado');if(!empregado)throw new Error('Empregado não encontrado.');
  const {data:evento,error:erroEvento}=await banco.from('eventos_folha').select('id,codigo,ativo,configuracao_calculo').eq('escritorio_id',escritorioId).eq('id',eventoId).maybeSingle();
@@ -103,18 +141,40 @@ export async function salvarLancamentoEvento(dados:FormData){
   valor:calculado.valor,tipo_referencia:tipoReferencia,quantidade_referencia:quantidade,valor_unitario:calculado.valor_unitario,
   parametros_calculo:{percentual_adicional:Number(configuracao.percentual_adicional??0),divisor_dias:Number(configuracao.divisor_dias??30)},
   referencia:calculado.referencia||ler(dados,'referencia')||null,observacao:ler(dados,'observacao')||null};
- if(id){const {error:erro}=await banco.from('lancamentos_eventos_folha').update(registro).eq('id',id).eq('escritorio_id',escritorioId);conferirErro(erro,'Editar lançamento');}
- else {const {error:erro}=await banco.from('lancamentos_eventos_folha').insert({escritorio_id:escritorioId,criado_por:usuario.id,...registro});conferirErro(erro,'Lançar evento');}
- revalidatePath('/folha/lancamentos');return {sucesso:true,mensagem:'Evento registrado com sucesso.'};
+ if(id){
+  const {data:alterado,error:erro}=await banco.from('lancamentos_eventos_folha').update(registro)
+   .eq('id',id).eq('escritorio_id',escritorioId).select('id').maybeSingle();
+  conferirErro(erro,'Editar lançamento');
+  if(!alterado)throw new Error('O lançamento não foi atualizado.');
+ }else{
+  const {error:erro}=await banco.from('lancamentos_eventos_folha').insert({escritorio_id:escritorioId,criado_por:usuario.id,...registro});
+  conferirErro(erro,'Lançar evento');
+ }
+ try{
+  if(origem&&(origem.empregado_id!==empregadoId||origem.competencia!==competencia))
+   await recalcularReciboAposEvento(banco,escritorioId,origem.empregado_id,origem.competencia);
+  await recalcularReciboAposEvento(banco,escritorioId,empregadoId,competencia);
+ }finally{
+  revalidatePath('/folha/lancamentos');revalidatePath('/folha/contracheques');
+ }
+ return {sucesso:true,mensagem:'Evento registrado e contracheque atualizado, quando já processado.'};
 }
 export async function excluirLancamentoEvento(dados:FormData):Promise<void>{
  const {banco,escritorioId}=await exigirEdicao();const id=uuid(textoObrigatorio(dados.get('id'),'Lançamento'));
- const {data:registro}=await banco.from('lancamentos_eventos_folha').select('empregado_id,competencia').eq('id',id).eq('escritorio_id',escritorioId).maybeSingle();
+ const {data:registro,error:erroRegistro}=await banco.from('lancamentos_eventos_folha').select('empregado_id,competencia').eq('id',id).eq('escritorio_id',escritorioId).maybeSingle();
+ conferirErro(erroRegistro,'Consultar lançamento');
  if(!registro)throw new Error('Registro não localizado.');
  const {data:fechado}=await banco.from('contracheques_folha').select('id').eq('escritorio_id',escritorioId).eq('empregado_id',registro.empregado_id).eq('competencia',registro.competencia).eq('situacao','CONFERIDO').maybeSingle();
  if(fechado)throw new Error('Folha conferida. Reabra a competência da empresa antes de excluir lançamentos.');
- const {error:erro}=await banco.from('lancamentos_eventos_folha').delete().eq('escritorio_id',escritorioId).eq('id',id);
- conferirErro(erro,'Excluir lançamento');revalidatePath('/folha/lancamentos');
+ const {data:excluido,error:erro}=await banco.from('lancamentos_eventos_folha').delete()
+  .eq('escritorio_id',escritorioId).eq('id',id).select('id').maybeSingle();
+ conferirErro(erro,'Excluir lançamento');
+ if(!excluido)throw new Error('O lançamento não foi excluído.');
+ try{
+  await recalcularReciboAposEvento(banco,escritorioId,registro.empregado_id,registro.competencia);
+ }finally{
+  revalidatePath('/folha/lancamentos');revalidatePath('/folha/contracheques');
+ }
 }
 export async function aprovarRegrasFolha(dados:FormData){
  const {banco,escritorioId,usuario}=await exigirEdicao();
