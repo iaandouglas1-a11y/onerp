@@ -13,12 +13,13 @@ export async function gerarRelatorioDebitosPdf(cliente:{razao_social:string;cpf_
  const normal=await documento.embedFont(StandardFonts.Helvetica);const forte=await documento.embedFont(StandardFonts.HelveticaBold);
  const logo=await documento.embedPng(await readFile(join(process.cwd(),'public','marca','on-contabilidade-escura.png')));
  const ativos=debitos.filter(d=>d.situacao==='ABERTO');const resumo=consolidarDebitos(ativos,taxas,hoje);
- const W=595.28,H=841.89, margem=38;let pagina:PDFPage;let y=0;
+ const W=595.28,H=841.89, margem=38;let pagina:PDFPage=documento.addPage([W,H]);let y=0;
  function texto(valor:unknown,x:number,y0:number,tamanho=9,fonte:PDFFont=normal,cor=azul){pagina.drawText(seguro(valor),{x,y:y0,size:tamanho,font:fonte,color:cor});}
- function paginaNova(){pagina=documento.addPage([W,H]);pagina.drawRectangle({x:0,y:H-7,width:W,height:7,color:verde});pagina.drawImage(logo,{x:margem,y:H-76,width:69,height:56.5});texto('RELATÓRIO FISCAL',W-margem-92,H-43,8,forte,cinza);pagina.drawLine({start:{x:margem,y:H-87},end:{x:W-margem,y:H-87},color:rgb(.85,.88,.90),thickness:.8});y=H-110;}
+ function prepararPagina(){pagina.drawRectangle({x:0,y:H-7,width:W,height:7,color:verde});pagina.drawImage(logo,{x:margem,y:H-76,width:69,height:56.5});texto('RELATÓRIO FISCAL',W-margem-92,H-43,8,forte,cinza);pagina.drawLine({start:{x:margem,y:H-87},end:{x:W-margem,y:H-87},color:rgb(.85,.88,.90),thickness:.8});y=H-110;}
+ function paginaNova(){pagina=documento.addPage([W,H]);prepararPagina();}
  function box(x:number,rotulo:string,valor:number,cor:ReturnType<typeof rgb>){pagina.drawRectangle({x,y:y-73,width:166,height:65,color:claro});pagina.drawRectangle({x,y:y-73,width:166,height:4,color:cor});texto(rotulo,x+10,y-23,8,normal,cinza);texto(moeda(valor),x+10,y-49,13,forte,cor);}
  function cabecalhoTabela(){pagina.drawRectangle({x:margem,y:y-25,width:W-2*margem,height:25,color:claro});texto('DÉBITO / REFERÊNCIA',margem+6,y-17,7.6,forte);texto('VENC.',margem+224,y-17,7.6,forte);texto('PRINCIPAL',margem+286,y-17,7.6,forte);texto('ACRÉSC.',margem+369,y-17,7.6,forte);texto('TOTAL',margem+452,y-17,7.6,forte);y-=26;}
- paginaNova();texto('Relatório de débitos fiscais',margem,y,17,forte);y-=24;
+ prepararPagina();texto('Relatório de débitos fiscais',margem,y,17,forte);y-=24;
  texto(`Cliente: ${caber(cliente.razao_social,normal,9,390)}`,margem,y,9);y-=16;
  texto(`CPF/CNPJ: ${formatarDocumento(cliente.cpf_cnpj)}`,margem,y,9);y-=16;
  texto(`Atualizado em: ${dataBrasileira(hoje)} | Valores para conferência`,margem,y,8,normal,cinza);y-=26;
