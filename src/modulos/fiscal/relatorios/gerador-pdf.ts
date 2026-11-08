@@ -8,9 +8,12 @@ const CORES = {
   fundo: rgb(1, 1, 1),
   texto: rgb(0.039, 0.067, 0.110), // #0A111C
   verde: rgb(0.486, 0.725, 0.235), // #7CB93C
+  ambar: rgb(0.902, 0.624, 0.000),
+  vermelho: rgb(0.820, 0.239, 0.239),
+  faixaTabela: rgb(0.936, 0.947, 0.960),
   cinza: rgb(0.604, 0.647, 0.706), // #9AA5B4
   claro: rgb(0.957, 0.965, 0.973), // #F4F6F8
-  borda: rgb(0.86, 0.89, 0.91),
+  borda: rgb(0.82, 0.85, 0.88),
 };
 
 type Orientacao = 'retrato' | 'paisagem';
@@ -29,7 +32,8 @@ export type RelatorioPdf = {
 };
 
 async function carregarLogo(documento: PDFDocument) {
-  const caminho = join(process.cwd(), 'public', 'marca', 'on-contabilidade-escura.png');
+  // Marca institucional, separada da identidade visual do aplicativo On ERP.
+  const caminho = join(process.cwd(), 'public', 'marca', 'on-contabilidade-relatorios.png');
   const conteudo = await readFile(caminho);
   return documento.embedPng(conteudo);
 }
@@ -38,6 +42,13 @@ function percentual(valor: number | null | undefined): string {
   return valor == null || !Number.isFinite(valor)
     ? '—'
     : `${(valor * 100).toFixed(1).replace('.', ',')}%`;
+}
+
+function corPercentual(valor: number | null | undefined) {
+  if (valor == null || !Number.isFinite(valor)) return CORES.cinza;
+  if (valor <= 0.8) return CORES.verde;
+  if (valor <= 1) return CORES.ambar;
+  return CORES.vermelho;
 }
 
 function textoSeguro(valor: unknown): string {
@@ -240,14 +251,22 @@ export async function gerarRelatorioMeiPdf(dados: RelatorioMeiPdf): Promise<Uint
 
   function barraProgresso(x: number, y: number, w: number, h: number, proporcao: number | null) {
     caixa(x, y, w, h, CORES.claro);
-    if (proporcao != null && Number.isFinite(proporcao) && proporcao > 0) {
-      pagina.drawRectangle({ x, y, width: w * Math.min(1, proporcao), height: h, color: CORES.verde });
+    if (proporcao == null || !Number.isFinite(proporcao) || proporcao <= 0) return;
+    if (proporcao <= 1) {
+      pagina.drawRectangle({ x, y, width: w * proporcao, height: h, color: corPercentual(proporcao) });
+      return;
     }
+    // Representação proporcional do valor acumulado total dentro da largura fixa:
+    // até 100% do limite (verde), acima do limite (vermelho).
+    const parteLimite = w / proporcao;
+    pagina.drawRectangle({ x, y, width: parteLimite, height: h, color: CORES.verde });
+    pagina.drawRectangle({ x: x + parteLimite, y, width: w - parteLimite, height: h, color: CORES.vermelho });
+    pagina.drawLine({ start: { x: x + parteLimite, y }, end: { x: x + parteLimite, y: y + h }, thickness: 0.7, color: CORES.fundo });
   }
 
   // Cabeçalho visual da marca, sem o texto "On ERP".
   caixa(0, 835.89, larguraPagina, 6, CORES.verde);
-  pagina.drawImage(logo, { x: margem, y: 750, width: 90, height: 73.6 });
+  pagina.drawImage(logo, { x: margem, y: 750, width: 74, height: 74 });
   escrever('RELATÓRIO DE FATURAMENTO MEI', margem + 105, 795, 13, true);
   escrever(`Ano-calendário ${dados.ano}`, margem + 105, 778, 9, false, CORES.cinza);
   pagina.drawLine({ start: { x: margem, y: 741 }, end: { x: larguraPagina - margem, y: 741 }, thickness: 0.7, color: CORES.borda });
@@ -260,25 +279,25 @@ export async function gerarRelatorioMeiPdf(dados: RelatorioMeiPdf): Promise<Uint
   const espacamento = 9;
   const larguraCartao = (largura - 2 * espacamento) / 3;
   const indicadores = [
-    ['Faturamento anual', formatarMoeda(dados.receitaAnual)],
-    ['Limite do ano', dados.limiteAnual == null ? 'Não configurado' : formatarMoeda(dados.limiteAnual)],
-    ['Limite utilizado', percentual(dados.percentualAnual)],
+    { rotulo: 'Faturamento anual', valor: formatarMoeda(dados.receitaAnual), cor: CORES.texto },
+    { rotulo: 'Limite do ano', valor: dados.limiteAnual == null ? 'Não configurado' : formatarMoeda(dados.limiteAnual), cor: CORES.texto },
+    { rotulo: 'Limite utilizado', valor: percentual(dados.percentualAnual), cor: corPercentual(dados.percentualAnual) },
   ];
-  indicadores.forEach(([rotulo, valor], indice) => {
+  indicadores.forEach(({ rotulo, valor, cor }, indice) => {
     const x = margem + (larguraCartao + espacamento) * indice;
     caixa(x, 565, larguraCartao, 65);
     escrever(rotulo, x + 11, 608, 8, false, CORES.cinza);
-    escrever(cortarTexto(valor, negrito, 12, larguraCartao - 20), x + 11, 584, 12, true);
+    escrever(cortarTexto(valor, negrito, 12, larguraCartao - 20), x + 11, 584, 12, true, cor);
   });
 
   escrever('Progressão anual do limite', margem, 537, 9, true);
-  escreverDireita(percentual(dados.percentualAnual), larguraPagina - margem, 537, 9, true);
+  escreverDireita(percentual(dados.percentualAnual), larguraPagina - margem, 537, 9, true, corPercentual(dados.percentualAnual));
   barraProgresso(margem, 520, largura, 8, dados.percentualAnual);
 
   escrever('Faturamento mensal por atividade', margem, 482, 11, true);
   const topoTabela = 460;
-  const alturaCabecalho = 29;
-  const alturaLinha = 26;
+  const alturaCabecalho = 27;
+  const alturaLinha = 22;
   // Tabela MEI mais compacta, centralizada no A4 e com colunas proporcionais.
   // Apenas a distribuição horizontal é modificada; cálculos e demais blocos do PDF permanecem intactos.
   const larguraTabela = 430;
@@ -286,25 +305,25 @@ export async function gerarRelatorioMeiPdf(dados: RelatorioMeiPdf): Promise<Uint
   const limiteColunaTotal = inicioTabela + 110 + 154 - 12;
   const limiteColunaPercentual = inicioTabela + larguraTabela - 12;
   caixa(inicioTabela, topoTabela - alturaCabecalho, larguraTabela, alturaCabecalho);
-  escrever('Mês', inicioTabela + 12, topoTabela - 19, 9, true);
-  escreverDireita('Total', limiteColunaTotal, topoTabela - 19, 9, true);
-  escreverDireita('Progressão do limite (%)', limiteColunaPercentual, topoTabela - 19, 8.5, true);
+  escrever('Mês', inicioTabela + 12, topoTabela - 18, 9, true);
+  escreverDireita('Total', limiteColunaTotal, topoTabela - 18, 9, true);
+  escreverDireita('Progressão do limite (%)', limiteColunaPercentual, topoTabela - 18, 8.5, true);
 
   dados.meses.forEach((item, indice) => {
     const topo = topoTabela - alturaCabecalho - indice * alturaLinha;
     const fundo = topo - alturaLinha;
-    if (indice % 2 === 1) caixa(inicioTabela, fundo, larguraTabela, alturaLinha, rgb(0.985, 0.987, 0.990));
-    escrever(item.mes, inicioTabela + 12, fundo + 9, 9);
-    escreverDireita(formatarMoeda(item.total), limiteColunaTotal, fundo + 9, 9);
-    escreverDireita(percentual(item.percentualAcumulado), limiteColunaPercentual, fundo + 8, 8);
-    pagina.drawLine({ start: { x: inicioTabela, y: fundo }, end: { x: inicioTabela + larguraTabela, y: fundo }, thickness: 0.35, color: CORES.borda });
+    if (indice % 2 === 1) caixa(inicioTabela, fundo, larguraTabela, alturaLinha, CORES.faixaTabela);
+    escrever(item.mes, inicioTabela + 12, fundo + 7, 9);
+    escreverDireita(formatarMoeda(item.total), limiteColunaTotal, fundo + 7, 9);
+    escreverDireita(percentual(item.percentualAcumulado), limiteColunaPercentual, fundo + 7, 8.5, true, corPercentual(item.percentualAcumulado));
+    pagina.drawLine({ start: { x: inicioTabela, y: fundo }, end: { x: inicioTabela + larguraTabela, y: fundo }, thickness: 0.5, color: CORES.borda });
   });
 
-  const baseTotal = topoTabela - alturaCabecalho - dados.meses.length * alturaLinha - 32;
-  caixa(inicioTabela, baseTotal, larguraTabela, 32);
+  const baseTotal = topoTabela - alturaCabecalho - dados.meses.length * alturaLinha - 28;
+  caixa(inicioTabela, baseTotal, larguraTabela, 30);
   escrever('TOTAL ANUAL', inicioTabela + 12, baseTotal + 11, 9, true);
   escreverDireita(formatarMoeda(dados.receitaAnual), limiteColunaTotal, baseTotal + 11, 9, true);
-  escreverDireita(percentual(dados.percentualAnual), limiteColunaPercentual, baseTotal + 10, 8, true);
+  escreverDireita(percentual(dados.percentualAnual), limiteColunaPercentual, baseTotal + 10, 8.5, true, corPercentual(dados.percentualAnual));
   if (baseTotal < 53) throw new Error('Falha de diagramação: relatório MEI excedeu uma página.');
 
   pagina.drawLine({ start: { x: margem, y: 43 }, end: { x: larguraPagina - margem, y: 43 }, thickness: 0.6, color: CORES.borda });
