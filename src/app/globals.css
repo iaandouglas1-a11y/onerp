@@ -439,3 +439,48 @@
   .confirmacao-acoes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .confirmacao-acoes .botao{width:100%;min-width:0;min-height:44px;white-space:nowrap}
 }
+
+/* v0.9.5 — Safari iOS: tipografia mínima garantida em TODOS os campos.
+   Correção anterior dependia do campo estar em contêineres específicos.
+   Regras gerais ao final da folha evitam que estilos de módulo se sobreponham.
+   Não remove zoom por gesto e não altera o design desktop. */
+@media screen and (max-width: 800px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]),
+  select,
+  textarea,
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):focus,
+  select:focus,
+  textarea:focus {
+    font-size: 16px !important;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+}
+
+
+/* v0.10.0 — Design system: alinhamento e estados em todos os módulos. */
+:root{--ui-acao-transicao:background-color .16s ease,border-color .16s ease,color .16s ease,box-shadow .16s ease,opacity .16s ease}
+:is(.botao,.botao-texto,.modal-fechar,.navegacao-mobile button,.confirmacao-acoes button){
+  font-family:inherit;box-sizing:border-box;transition:var(--ui-acao-transicao);
+}
+:is(.botao,.botao-texto){display:inline-flex;align-items:center;justify-content:center;gap:7px;text-align:center;vertical-align:middle;min-width:0;text-decoration:none}
+:is(.botao,.botao-texto):focus-visible,.modal-fechar:focus-visible{outline:2px solid var(--verde);outline-offset:2px}
+:is(.botao,.botao-texto):active:not(:disabled){transform:translateY(1px)}
+:is(.botao,.botao-texto):disabled,[aria-disabled="true"].botao{opacity:.52;cursor:not-allowed;box-shadow:none;pointer-events:none}
+form[data-salvando="true"] :is(button[type="submit"],input[type="submit"]){pointer-events:none;opacity:.65;cursor:progress}
+form[data-salvando="true"] :is(button[type="submit"],input[type="submit"])::after{content:"";width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:on-erp-giro .65s linear infinite;flex:none}
+@keyframes on-erp-giro{to{transform:rotate(360deg)}}
+:is(.filtros,.acoes-registro,.confirmacao-acoes,.titulo-pagina,.topo-cartao){column-gap:10px;row-gap:8px}
+:is(.filtros,.acoes-registro,.confirmacao-acoes) :is(.botao,button,select,input){max-width:100%}
+.filtros :is(button,a.botao){align-self:flex-end}
+.campo{min-width:0}
+.campo :is(input,select,textarea){box-sizing:border-box;font-family:inherit}
+.modal-cabecalho>div,.topo-cartao>div,.titulo-pagina>div{min-width:0}
+@media(max-width:800px){
+ .acoes-registro{flex-wrap:wrap;min-width:0}
+ .titulo-pagina,.topo-cartao{align-items:center;flex-wrap:wrap}
+ .filtros{align-items:flex-end}
+ :is(.botao,.botao-texto){min-height:44px}
+}
+@media(prefers-reduced-motion:reduce){:is(.botao,.botao-texto){transition:none}form[data-salvando="true"] :is(button[type="submit"],input[type="submit"])::after{animation:none}}

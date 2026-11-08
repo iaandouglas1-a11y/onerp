@@ -18,7 +18,7 @@ export function JanelasFinanceiras({dados,tipo,id,fecharEm,clienteId}:Propriedad
  const campoId=(valor?:string)=><input name="id" type="hidden" value={valor||''}/>;
  const idAtual=id||'';
  const comum=(acao:(formData:FormData)=>Promise<{sucesso?:boolean;mensagem?:string}|undefined>,registro:{id:string}|undefined,conteudo:ReactNode,titulo:string)=>
-  <JanelaModal titulo={titulo} fecharEm={fecharEm} largura="ampla"><FormularioContinuo key={`${tipo}-${idAtual}`} acao={acao} modo={registro?'edicao':'cadastro'} rotaNovoAposEdicao={`${fecharEm}${fecharEm.includes('?')?'&':'?'}modal=${tipo}`} className="grade-formulario">
+  <JanelaModal titulo={titulo} fecharEm={fecharEm} largura="ampla"><FormularioContinuo key={`${tipo}-${idAtual}`} acao={acao} modo={registro?'edicao':'cadastro'} rotaNovoAposEdicao={`${fecharEm}${fecharEm.includes('?')?'&':'?'}modal=${tipo}`} className="grade-formulario" focarClienteAposSalvar={tipo==='cobranca'||tipo==='despesa'||tipo==='movimento'}>
   {campoId(registro?.id as string|undefined)}{conteudo}{botao(registro?'Salvar alterações':'Salvar')}</FormularioContinuo></JanelaModal>;
  if(tipo==='categoria'){
  const registro=dados.categorias.find(c=>c.id===idAtual);

@@ -7,7 +7,17 @@ export function JanelaModal({titulo,descricao,fecharEm,children,largura='normal'
  const roteador=useRouter();const referencia=useRef<HTMLDivElement>(null);const alterado=useRef(false);
  const [pedirDescarte,definirPedirDescarte]=useState(false);
  useEffect(()=>{const elemento=referencia.current;if(!elemento)return;const salvo=()=>{alterado.current=false;};elemento.addEventListener('onerp:salvo',salvo);return()=>elemento.removeEventListener('onerp:salvo',salvo);},[]);
- const fechar=useCallback(()=>{if(alterado.current)definirPedirDescarte(true);else roteador.replace(fecharEm);},[roteador,fecharEm]);
+ const destinoFechamento=useCallback(()=>{
+  const destino=new URL(fecharEm,'https://on-erp.local');
+  if(destino.pathname===window.location.pathname){
+   const filtros=new URLSearchParams(window.location.search);
+   for(const [chave,valor] of destino.searchParams)filtros.set(chave,valor);
+   for(const chave of ['novo','nova','editar','modal','id','excluir','ajustar'])filtros.delete(chave);
+   destino.search=filtros.toString();
+  }
+  return destino.pathname+destino.search;
+ },[fecharEm]);
+ const fechar=useCallback(()=>{if(alterado.current)definirPedirDescarte(true);else roteador.replace(destinoFechamento());},[roteador,destinoFechamento]);
  useEffect(()=>{const anterior=document.activeElement instanceof HTMLElement?document.activeElement:null;referencia.current?.focus();
  const tecla=(evento:KeyboardEvent)=>{if(evento.key==='Escape'){evento.preventDefault();fechar();}};document.addEventListener('keydown',tecla);
  const transbordamento=document.body.style.overflow;document.body.style.overflow='hidden';return()=>{document.removeEventListener('keydown',tecla);document.body.style.overflow=transbordamento;anterior?.focus();};},[fechar]);
@@ -16,6 +26,6 @@ export function JanelaModal({titulo,descricao,fecharEm,children,largura='normal'
    <div className="modal-cabecalho"><div><h2>{titulo}</h2>{descricao&&<p className="muted pequeno">{descricao}</p>}</div><button type="button" aria-label="Fechar janela" className="modal-fechar" onClick={fechar}><X size={18}/></button></div>
    <div className="modal-corpo">{children}</div>
   </div>
-  <DialogoConfirmacao aberto={pedirDescarte} titulo="Descartar alterações?" descricao="As informações ainda não salvas serão perdidas." confirmar="Descartar alterações" aoCancelar={()=>definirPedirDescarte(false)} aoConfirmar={()=>{alterado.current=false;definirPedirDescarte(false);roteador.replace(fecharEm);}}/>
+  <DialogoConfirmacao aberto={pedirDescarte} titulo="Descartar alterações?" descricao="As informações ainda não salvas serão perdidas." confirmar="Descartar alterações" aoCancelar={()=>definirPedirDescarte(false)} aoConfirmar={()=>{alterado.current=false;definirPedirDescarte(false);roteador.replace(destinoFechamento());}}/>
  </div>;
 }

@@ -50,7 +50,7 @@ export default async function DebitosFiscais({searchParams}:{searchParams:Promis
    </tr>})}</tbody></table></div>}
   </Cartao>
   {(parametros.novo==='1'||edicao)&&<JanelaModal titulo={edicao?'Editar débito':'Cadastrar débito fiscal'} descricao="Informe o valor principal e selecione a regra de atualização adequada ao débito." fecharEm={base} largura="ampla">
-   <FormularioContinuo acao={salvarDebitoFiscal} modo={edicao?'edicao':'cadastro'} rotaNovoAposEdicao={base} className="grade colunas-2" manterCampos={['cliente_id']}>
+   <FormularioContinuo acao={salvarDebitoFiscal} modo={edicao?'edicao':'cadastro'} rotaNovoAposEdicao={base} className="grade colunas-2" manterCampos={['cliente_id']} focarClienteAposSalvar>
     {edicao&&<input type="hidden" name="id" value={edicao.id}/>}
     <Campo rotulo="Cliente" nome="cliente_id" obrigatorio padrao={edicao?.cliente_id??selecionado??''} opcoes={clientes.map(c=>({valor:c.id,rotulo:c.razao_social}))}/>
     <Campo rotulo="Tipo de débito" nome="tipo_debito" obrigatorio padrao={edicao?.tipo_debito??'DAS_MEI'} opcoes={TIPOS}/>
