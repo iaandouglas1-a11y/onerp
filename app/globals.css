@@ -1,0 +1,323 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/*
+  iOS 26 (PWA na tela inicial): o sistema desenha um blur "Liquid Glass" que vai
+  ~40px ALÉM da status bar e não dá para desativar via web. O conteúdo precisa
+  começar abaixo dessa faixa (2.5rem extra, só quando instalado como app).
+  CSS simples, sem variáveis, para não depender de como o WebKit resolve env() dentro de var().
+*/
+.app-top-pad {
+  padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
+}
+.app-top-cover {
+  /* No iPhone 15 Pro em modo PWA, o Liquid Glass se estende além da safe area.
+     A faixa opaca precisa cobrir também essa extensão antes do cabeçalho. */
+  height: calc(6rem + env(safe-area-inset-top, 0px));
+  background: #161616 !important;
+  opacity: 1;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+/* Cabeçalho mobile (mockup): faixa #161616 com logo à esquerda e título/ícone à direita;
+   o conteúdo sobe 16px por cima dela com cantos superiores arredondados. */
+.mobile-page-header {
+  @apply flex items-center gap-3 bg-[#161616] border-b border-surface-border/50 px-4 pb-7;
+  padding-top: calc(0.875rem + env(safe-area-inset-top, 0px));
+}
+@media (display-mode: standalone) {
+  .app-top-pad {
+    padding-top: calc(3.25rem + env(safe-area-inset-top, 0px));
+  }
+  .app-top-cover {
+    height: calc(6rem + env(safe-area-inset-top, 0px));
+  }
+  .mobile-page-header {
+    /* Empurra logo e título para fora da faixa sombreada do sistema. */
+    padding-top: calc(4rem + env(safe-area-inset-top, 0px));
+  }
+}
+@media (min-width: 768px) {
+  .app-top-pad {
+    padding-top: 2rem;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #0A0A0A;
+  color: #F5F7FA;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /* O respiro do topo (Dynamic Island / status bar) não é feito aqui —
+     um padding-top no body não tem efeito confiável dentro do layout flex
+     de AppShell.tsx. Ele é aplicado direto no container de conteúdo
+     (o mesmo lugar que já trata a safe area de baixo), em AppShell.tsx. */
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@layer components {
+
+  /* ── Design System 2.0 — superfícies em camadas ──────────────────────
+     bg (#0A0A0A) → surface (#141414, opaca) → surface-2 (#1C1C1C, elevada).
+     Blur/glass reservado só pra headers fixos e bottom sheet, não pra
+     cards "normais" (isso é o que gerava ruído visual no design anterior). */
+  .glass-card {
+    @apply bg-surface border border-surface-border/70 shadow-xl rounded-card transition-all duration-300;
+  }
+
+  .glass-card:hover {
+    @apply border-[#5DA832]/30;
+  }
+
+  /* Superfície elevada — usada em linhas de lista tocáveis */
+  .surface-2 {
+    @apply bg-surface-2 border border-surface-border/60 rounded-card;
+  }
+
+  /* Números — protagonistas da UI (saldo, valores). tabular-nums evita
+     "dança" de largura quando o valor muda. */
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  .amount-hero {
+    @apply num font-extrabold tracking-tight text-ink-primary;
+  }
+
+  /* Botão Primário — verde ON */
+  .btn-primary {
+    @apply min-h-[44px] inline-flex items-center justify-center bg-[#5DA832] hover:bg-[#6fc23b] active:bg-[#4a8828] text-[#0A0A0A] font-bold text-sm px-5 py-2.5 rounded-xl transition-all duration-200 active:scale-95 shadow-md disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Botão Secundário */
+  .btn-secondary {
+    @apply min-h-[44px] inline-flex items-center justify-center bg-surface-2/70 hover:bg-surface-2 text-slate-200 font-medium text-sm px-5 py-2.5 rounded-xl transition-all duration-200 active:scale-95 border border-surface-border/60 disabled:opacity-50;
+  }
+
+  /* Input & Select base */
+  .input-modern, .select-modern {
+    @apply w-full box-border bg-surface border border-surface-border focus:border-[#5DA832] focus:ring-[3px] focus:ring-[#5DA832]/20 rounded-xl transition-all duration-200 outline-none px-3 text-sm text-ink-primary placeholder:text-slate-600 disabled:opacity-50 disabled:cursor-not-allowed;
+    height: 2.75rem !important;
+    min-height: 2.75rem !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .input-modern[aria-invalid="true"] { @apply border-[#F87171] ring-[3px] ring-[#F87171]/20; }
+
+  .input-modern[type="date"],
+  .input-modern[type="month"] {
+    color-scheme: dark;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .input-modern[type="date"]::-webkit-datetime-edit,
+  .input-modern[type="month"]::-webkit-datetime-edit {
+    padding: 0;
+    line-height: 1;
+  }
+
+  .input-modern[type="date"]::-webkit-datetime-edit-fields-wrapper,
+  .input-modern[type="month"]::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+  }
+
+  /* O ícone nativo do calendário é escuro e some no fundo escuro do app.
+     Forçamos tamanho fixo, alinhamento à direita e uma cor visível (verde da marca). */
+  .input-modern[type="date"]::-webkit-calendar-picker-indicator,
+  .input-modern[type="month"]::-webkit-calendar-picker-indicator {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    margin: 0 0 0 8px;
+    padding: 0;
+    flex-shrink: 0;
+    cursor: pointer;
+    opacity: 0.9;
+    /* Deixa o ícone nativo (preto) visível em tom esverdeado sobre fundo escuro */
+    filter: invert(64%) sepia(53%) saturate(496%) hue-rotate(48deg) brightness(95%) contrast(92%);
+    background-size: 16px 16px;
+  }
+
+  /* Remove botão nativo de "limpar" que o Chrome/Android insere e que desalinha o campo */
+  .input-modern[type="date"]::-webkit-clear-button,
+  .input-modern[type="month"]::-webkit-clear-button {
+    display: none;
+  }
+
+  /* Select específico */
+  .select-modern {
+    @apply appearance-none cursor-pointer;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%235DA832' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    background-size: 14px 10px;
+    padding-right: 2rem;
+  }
+
+  /* Label */
+  .label-modern {
+    @apply text-xs font-medium text-ink-secondary mb-1.5 block;
+  }
+
+  /* Badges — pill, sólido e discreto (fundo com 14% de opacidade) */
+  .badge-default {
+    @apply inline-flex items-center h-6 px-2.5 rounded-full bg-surface-2 text-slate-300 text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply inline-flex items-center h-6 px-2.5 rounded-full bg-[#5DA832]/[0.14] text-[#8FCB5E] text-xs font-medium;
+  }
+
+  .badge-error {
+    @apply inline-flex items-center h-6 px-2.5 rounded-full bg-danger/[0.14] text-[#f87171] text-xs font-medium;
+  }
+
+  .badge-warning {
+    @apply inline-flex items-center h-6 px-2.5 rounded-full bg-warning/[0.14] text-[#f5a524] text-xs font-medium;
+  }
+
+  .badge-info {
+    @apply inline-flex items-center h-6 px-2.5 rounded-full bg-white/[0.08] text-ink-secondary text-xs font-medium;
+  }
+
+  /* Métrica */
+  .metric-card {
+    @apply relative overflow-hidden rounded-card border bg-gradient-to-br p-5 transition-all duration-300;
+  }
+
+  /* Chip de ícone circular/rounded — usado em listas (categoria, conta, etc.) */
+  .icon-chip {
+    @apply flex items-center justify-center rounded-xl shrink-0;
+  }
+
+  /* Item de lista tocável — área de toque única, sem "card dentro de card" */
+  .list-row {
+    @apply flex items-center gap-3 px-4 py-3.5 transition-colors duration-150 active:bg-surface-2/60;
+  }
+  .list-row + .list-row {
+    @apply border-t border-surface-border/50;
+  }
+
+  /* Coluna de ações (editar/duplicar/excluir) colada na extremidade direita do card —
+     libera a largura da linha para o texto complementar. */
+  .action-col {
+    @apply flex flex-col items-center justify-center gap-1 shrink-0 self-stretch pl-2.5 ml-1 border-l border-surface-border/50;
+  }
+  /* Variante em linha (usada em painéis expandidos e no Orçamento) */
+  .action-row {
+    @apply flex flex-row items-center justify-center gap-1 shrink-0 self-center pl-2.5 ml-1 border-l border-surface-border/50;
+  }
+
+  /* Spinner */
+  .spinner-modern {
+    @apply h-7 w-7 animate-spin rounded-full border-2 border-[#1C1C1C] border-t-[#5DA832];
+  }
+
+  .transition-smooth {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  /* Foco visível (apenas navegação por teclado) — antes não havia nenhum
+     indicador de foco custom, então botões/links/inputs ficavam sem
+     feedback visual para quem navega via Tab. */
+  .btn-primary:focus-visible,
+  .btn-secondary:focus-visible {
+    @apply ring-2 ring-[#5DA832]/60 ring-offset-2 ring-offset-[#0A0A0A] outline-none;
+  }
+
+  a:focus-visible,
+  button:focus-visible {
+    @apply outline-none ring-2 ring-[#5DA832]/50 ring-offset-2 ring-offset-[#0A0A0A] rounded-lg;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #0A0A0A; }
+::-webkit-scrollbar-thumb { background: #1C1C1C; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #2A2A2A; }
+
+/* Animações */
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 16px rgba(93,168,50,0.2); }
+  50%       { box-shadow: 0 0 28px rgba(93,168,50,0.4); }
+}
+.animate-glow { animation: glow 3s ease-in-out infinite; }
+
+@media (max-width: 640px) {
+  body { font-size: 14px; }
+}
+
+/* Onfin — responsive financial filter and metric utilities */
+.onfin-filter-row { display:flex; align-items:center; gap:.5rem; min-width:0; flex-wrap:nowrap; }
+.onfin-filter-row > * { flex-shrink:0; }
+.onfin-filter-row .onfin-filter-scroll { min-width:0; flex:1 1 auto; overflow-x:auto; scrollbar-width:none; }
+.onfin-filter-row .onfin-filter-scroll::-webkit-scrollbar { display:none; }
+.onfin-financial-cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.75rem; }
+@media(max-width:767px) { .onfin-financial-cards { grid-template-columns:1fr; } }
+
+/* Desktop / Extrato: o título e a seleção de tipos antecedem os comandos.
+   Em telas pequenas, a ordem mobile original é preservada. */
+@media (min-width: 768px) {
+  .onfin-mov-layout > :first-child { order: 1; }
+  .onfin-mov-layout > aside { order: 2; }
+  .onfin-mov-layout > :last-child { order: 3; }
+  .onfin-mov-layout { gap: 1rem; }
+  .onfin-mov-layout .list-row { padding-top: .7rem; padding-bottom: .7rem; }
+}
+
+
+/* Onfin desktop consolidation · shared module structure (2026-11-08) */
+@media (min-width: 768px) {
+  .onfin-desktop-page, .onfin-module-layout, .onfin-module-content { min-width: 0; }
+  .onfin-module-layout { gap: 1rem; }
+  .onfin-module-summary { min-width: 0; }
+  .onfin-module-actions { min-width: 0; }
+  .onfin-module-content > *, .onfin-module-two-col > * { min-width: 0; }
+  .onfin-module-two-col { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1rem; align-items: start; }
+  .onfin-module-summary .num, .onfin-module-summary .text-lg { font-variant-numeric: tabular-nums; }
+  .onfin-module-summary .glass-card { box-shadow: none; background: #141414; }
+  .onfin-module-summary .glass-card:hover { border-color: #303030; }
+  .onfin-module-dividas .onfin-module-summary, .onfin-module-honorarios .onfin-module-summary { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.75rem; }
+  .onfin-module-dividas .onfin-module-summary > *, .onfin-module-honorarios .onfin-module-summary > * { min-width:0; margin:0; }
+  .onfin-module-dividas .onfin-module-summary > :last-child { display:flex; flex-direction:column; justify-content:center; }
+  .onfin-module-orcamento .onfin-module-summary { display:grid; grid-template-columns:1.15fr 1fr; gap:.75rem; align-items:stretch; }
+  .onfin-module-orcamento .onfin-module-summary > * { margin:0; min-width:0; }
+  .onfin-module-orcamento .onfin-module-summary > :last-child { align-items:stretch; }
+  .onfin-module-investimentos .onfin-module-summary { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:.75rem; align-items:stretch; }
+  .onfin-module-investimentos .onfin-module-summary > * { margin:0; min-width:0; }
+  .onfin-module-investimentos .onfin-module-summary > :last-child { grid-column:1/-1; }
+  .onfin-module-contas .onfin-module-summary > :first-child { max-width:350px; }
+  .onfin-module-contas .onfin-module-two-col > *, .onfin-module-categorias .onfin-module-two-col > * { height:fit-content; }
+  .onfin-desktop-page h1 { letter-spacing: -.025em; }
+}
+@media (min-width: 1100px) {
+  .onfin-module-dividas .onfin-module-summary { grid-template-columns:2fr 1fr; }
+  .onfin-module-honorarios .onfin-module-summary { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 1023px) {
+  .onfin-module-two-col { display:flex; flex-direction:column; gap:1rem; }
+  .onfin-module-two-col > * { width:100%; min-width:0; }
+}
+
+/* Intermediate desktop widths: protect readable cards next to navigation. */
+@media (min-width:768px) and (max-width:1023px) {
+  .onfin-module-orcamento .onfin-module-summary, .onfin-module-investimentos .onfin-module-summary { grid-template-columns:1fr; }
+  .onfin-module-investimentos .onfin-module-summary > :last-child { grid-column:auto; }
+}
