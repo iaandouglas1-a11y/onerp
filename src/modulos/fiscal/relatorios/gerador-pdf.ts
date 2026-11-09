@@ -268,7 +268,7 @@ export async function gerarRelatorioMeiPdf(dados: RelatorioMeiPdf): Promise<Uint
   caixa(0, 835.89, larguraPagina, 6, CORES.verde);
   // A imagem institucional é recortada para eliminar margens transparentes.
   // Assim a marca permanece grande, nítida e proporcional, sem encostar no título.
-  const larguraLogo = 106;
+  const larguraLogo = 90;
   const alturaLogo = larguraLogo * (logo.height / logo.width);
   const xLogo = margem;
   const yLogo = 746;
