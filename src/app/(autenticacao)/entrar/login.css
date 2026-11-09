@@ -45,3 +45,9 @@
   .on-login-entrar,.on-login-link,.on-login-id{font-size:16px}
   .on-login-entrada{min-height:53px}
 }
+
+/* v0.9.5 — alinhamento com a regra global de foco no Safari iOS. */
+@media screen and (max-width: 800px) {
+  .on-login-entrada input,
+  .on-login-entrada input:focus { font-size: 16px !important; }
+}

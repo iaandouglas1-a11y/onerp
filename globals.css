@@ -1,0 +1,242 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/*
+  iOS 26 (PWA na tela inicial): o sistema desenha um blur "Liquid Glass" que vai
+  ~40px ALÉM da status bar e não dá para desativar via web. O conteúdo precisa
+  começar abaixo dessa faixa (2.5rem extra, só quando instalado como app).
+  CSS simples, sem variáveis, para não depender de como o WebKit resolve env() dentro de var().
+*/
+.app-top-pad {
+  padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
+}
+.app-top-cover {
+  /* A área do sistema pode estender o blur do Liquid Glass abaixo da safe area. */
+  height: calc(6rem + env(safe-area-inset-top, 0px));
+  background: #161616 !important;
+  opacity: 1;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+@media (display-mode: standalone) {
+  .app-top-pad {
+    padding-top: calc(3.25rem + env(safe-area-inset-top, 0px));
+  }
+  .app-top-cover {
+    height: calc(6rem + env(safe-area-inset-top, 0px));
+  }
+}
+@media (min-width: 768px) {
+  .app-top-pad {
+    padding-top: 2rem;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #0A0A0A;
+  color: #F5F7FA;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  /* O respiro do topo (Dynamic Island / status bar) não é feito aqui —
+     um padding-top no body não tem efeito confiável dentro do layout flex
+     de AppShell.tsx. Ele é aplicado direto no container de conteúdo
+     (o mesmo lugar que já trata a safe area de baixo), em AppShell.tsx. */
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@layer components {
+
+  /* ── Design System 2.0 — superfícies em camadas ──────────────────────
+     bg (#0A0A0A) → surface (#161616, opaca) → surface-2 (#202020, elevada).
+     Blur/glass reservado só pra headers fixos e bottom sheet, não pra
+     cards "normais" (isso é o que gerava ruído visual no design anterior). */
+  .glass-card {
+    @apply bg-surface border border-surface-border/70 shadow-xl rounded-card transition-all duration-300;
+  }
+
+  .glass-card:hover {
+    @apply border-[#5DA832]/30;
+  }
+
+  /* Superfície elevada — usada em linhas de lista tocáveis */
+  .surface-2 {
+    @apply bg-surface-2 border border-surface-border/60 rounded-card;
+  }
+
+  /* Números — protagonistas da UI (saldo, valores). tabular-nums evita
+     "dança" de largura quando o valor muda. */
+  .num {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  .amount-hero {
+    @apply num font-extrabold tracking-tight text-ink-primary;
+  }
+
+  /* Botão Primário — verde ON */
+  .btn-primary {
+    @apply inline-flex items-center justify-center bg-[#5DA832] hover:bg-[#6fc23b] active:bg-[#4a8828] text-[#0A0A0A] font-bold text-sm px-5 py-2.5 rounded-xl transition-all duration-200 active:scale-95 shadow-md disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Botão Secundário */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center bg-surface-2/70 hover:bg-surface-2 text-slate-200 font-medium text-sm px-5 py-2.5 rounded-xl transition-all duration-200 active:scale-95 border border-surface-border/60 disabled:opacity-50;
+  }
+
+  /* Input & Select base */
+  .input-modern, .select-modern {
+    @apply w-full box-border bg-[#121212]/80 border border-[#2E2E2E]/80 focus:border-[#5DA832]/70 focus:ring-2 focus:ring-[#5DA832]/20 rounded-lg transition-all duration-200 outline-none px-3 text-sm text-slate-200 placeholder:text-slate-600;
+    height: 2.25rem !important;
+    min-height: 2.25rem !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .input-modern[type="date"],
+  .input-modern[type="month"] {
+    color-scheme: dark;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .input-modern[type="date"]::-webkit-datetime-edit,
+  .input-modern[type="month"]::-webkit-datetime-edit {
+    padding: 0;
+    line-height: 1;
+  }
+
+  .input-modern[type="date"]::-webkit-datetime-edit-fields-wrapper,
+  .input-modern[type="month"]::-webkit-datetime-edit-fields-wrapper {
+    padding: 0;
+  }
+
+  /* O ícone nativo do calendário é escuro e some no fundo escuro do app.
+     Forçamos tamanho fixo, alinhamento à direita e uma cor visível (verde da marca). */
+  .input-modern[type="date"]::-webkit-calendar-picker-indicator,
+  .input-modern[type="month"]::-webkit-calendar-picker-indicator {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    margin: 0 0 0 8px;
+    padding: 0;
+    flex-shrink: 0;
+    cursor: pointer;
+    opacity: 0.9;
+    /* Deixa o ícone nativo (preto) visível em tom esverdeado sobre fundo escuro */
+    filter: invert(64%) sepia(53%) saturate(496%) hue-rotate(48deg) brightness(95%) contrast(92%);
+    background-size: 16px 16px;
+  }
+
+  /* Remove botão nativo de "limpar" que o Chrome/Android insere e que desalinha o campo */
+  .input-modern[type="date"]::-webkit-clear-button,
+  .input-modern[type="month"]::-webkit-clear-button {
+    display: none;
+  }
+
+  /* Select específico */
+  .select-modern {
+    @apply appearance-none cursor-pointer;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%235DA832' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.6rem center;
+    background-size: 14px 10px;
+    padding-right: 2rem;
+  }
+
+  /* Label */
+  .label-modern {
+    @apply text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-1.5 block;
+  }
+
+  /* Badges — pill, sólido e discreto (fundo com 14% de opacidade) */
+  .badge-default {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full bg-surface-2 text-slate-300 text-[11px] font-bold;
+  }
+
+  .badge-success {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full bg-[#5DA832]/[0.14] text-[#6fc23b] text-[11px] font-bold;
+  }
+
+  .badge-error {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full bg-danger/[0.14] text-[#f87171] text-[11px] font-bold;
+  }
+
+  .badge-warning {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full bg-warning/[0.14] text-[#f5a524] text-[11px] font-bold;
+  }
+
+  .badge-info {
+    @apply inline-flex items-center px-2.5 py-1 rounded-full bg-info/[0.14] text-[#60a5fa] text-[11px] font-bold;
+  }
+
+  /* Métrica */
+  .metric-card {
+    @apply relative overflow-hidden rounded-card border bg-gradient-to-br p-5 transition-all duration-300;
+  }
+
+  /* Chip de ícone circular/rounded — usado em listas (categoria, conta, etc.) */
+  .icon-chip {
+    @apply flex items-center justify-center rounded-xl shrink-0;
+  }
+
+  /* Item de lista tocável — área de toque única, sem "card dentro de card" */
+  .list-row {
+    @apply flex items-center gap-3 px-4 py-3.5 transition-colors duration-150 active:bg-surface-2/60;
+  }
+  .list-row + .list-row {
+    @apply border-t border-surface-border/50;
+  }
+
+  /* Spinner */
+  .spinner-modern {
+    @apply h-7 w-7 animate-spin rounded-full border-2 border-[#202020] border-t-[#5DA832];
+  }
+
+  .transition-smooth {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  /* Foco visível (apenas navegação por teclado) — antes não havia nenhum
+     indicador de foco custom, então botões/links/inputs ficavam sem
+     feedback visual para quem navega via Tab. */
+  .btn-primary:focus-visible,
+  .btn-secondary:focus-visible {
+    @apply ring-2 ring-[#5DA832]/60 ring-offset-2 ring-offset-[#0A0A0A] outline-none;
+  }
+
+  a:focus-visible,
+  button:focus-visible {
+    @apply outline-none ring-2 ring-[#5DA832]/50 ring-offset-2 ring-offset-[#0A0A0A] rounded-lg;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #0A0A0A; }
+::-webkit-scrollbar-thumb { background: #202020; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #2E2E2E; }
+
+/* Animações */
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 16px rgba(93,168,50,0.2); }
+  50%       { box-shadow: 0 0 28px rgba(93,168,50,0.4); }
+}
+.animate-glow { animation: glow 3s ease-in-out infinite; }
+
+@media (max-width: 640px) {
+  body { font-size: 14px; }
+}

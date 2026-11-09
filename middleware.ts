@@ -1,0 +1,10 @@
+import { NextResponse, type NextRequest } from "next/server";
+
+export async function middleware(request: NextRequest) {
+  // Para uso pessoal, removemos a proteção de rotas e redirecionamentos
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+};
