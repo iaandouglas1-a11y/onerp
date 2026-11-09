@@ -33,7 +33,7 @@ export type RelatorioPdf = {
 
 async function carregarLogo(documento: PDFDocument) {
   // Marca institucional, separada da identidade visual do aplicativo On ERP.
-  const caminho = join(process.cwd(), 'public', 'marca', 'on-contabilidade-relatorios.png');
+  const caminho = join(process.cwd(), 'public', 'marca', 'on-contabilidade-relatorios-branca.png');
   const conteudo = await readFile(caminho);
   return documento.embedPng(conteudo);
 }
@@ -100,7 +100,7 @@ export async function gerarRelatorioPdf(conteudo: RelatorioPdf): Promise<Uint8Ar
     }
     numeroPagina++;
     pagina.drawRectangle({ x: 0, y: alturaPagina - 7, width: larguraPagina, height: 7, color: CORES.verde });
-    pagina.drawImage(logo, { x: margem, y: alturaPagina - 77, width: 69, height: 56.5 });
+    pagina.drawImage(logo, { x: margem, y: alturaPagina - 80, width: 88, height: 70 });
     escrever('RELATÓRIOS', larguraPagina - margem - 67, alturaPagina - 40, 8, normal, CORES.cinza);
     pagina.drawLine({ start: { x: margem, y: alturaPagina - 87 }, end: { x: larguraPagina - margem, y: alturaPagina - 87 }, thickness: 0.8, color: CORES.borda });
     y = alturaPagina - 108;
@@ -266,9 +266,9 @@ export async function gerarRelatorioMeiPdf(dados: RelatorioMeiPdf): Promise<Uint
 
   // Cabeçalho visual da marca, sem o texto "On ERP".
   caixa(0, 835.89, larguraPagina, 6, CORES.verde);
-  pagina.drawImage(logo, { x: margem, y: 750, width: 74, height: 74 });
-  escrever('RELATÓRIO DE FATURAMENTO MEI', margem + 105, 795, 13, true);
-  escrever(`Ano-calendário ${dados.ano}`, margem + 105, 778, 9, false, CORES.cinza);
+  pagina.drawImage(logo, { x: margem, y: 744, width: 90, height: 90 });
+  escrever('RELATÓRIO DE FATURAMENTO MEI', margem + 110, 795, 13, true);
+  escrever(`Ano-calendário ${dados.ano}`, margem + 110, 778, 9, false, CORES.cinza);
   pagina.drawLine({ start: { x: margem, y: 741 }, end: { x: larguraPagina - margem, y: 741 }, thickness: 0.7, color: CORES.borda });
 
   escrever('CLIENTE', margem, 719, 8, true, CORES.cinza);
