@@ -313,7 +313,6 @@ export async function gerarRelatorioMeiPdf(dados: RelatorioMeiPdf): Promise<Uint
   escrever('Progressão anual do limite', margem, 537, 9, true);
   escreverDireita(percentual(dados.percentualAnual), larguraPagina - margem, 537, 9, true, corPercentual(dados.percentualAnual));
   barraProgresso(margem, 518, largura, 12, dados.limiteAnual != null && dados.limiteAnual > 0 ? dados.receitaAnual / dados.limiteAnual : null);
-  escrever(dados.limiteAnual == null ? 'Limite não configurado' : `100% = ${formatarMoeda(dados.limiteAnual)} (limite efetivo)`, margem, 505, 8, false, CORES.cinza);
   if (dados.limiteAnual != null && dados.limiteAnual > 0) {
     const diferenca = dados.limiteAnual - dados.receitaAnual;
     const situacao = diferenca >= 0 ? `Disponível para faturar: ${formatarMoeda(diferenca)}` : `Limite excedido em: ${formatarMoeda(-diferenca)}`;
