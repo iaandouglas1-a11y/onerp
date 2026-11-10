@@ -315,7 +315,7 @@ export async function gerarRelatorioMeiPdf(dados: RelatorioMeiPdf): Promise<Uint
   barraProgresso(margem, 518, largura, 12, dados.limiteAnual != null && dados.limiteAnual > 0 ? dados.receitaAnual / dados.limiteAnual : null);
   if (dados.limiteAnual != null && dados.limiteAnual > 0) {
     const diferenca = dados.limiteAnual - dados.receitaAnual;
-    const situacao = diferenca >= 0 ? `Disponível para faturar: ${formatarMoeda(diferenca)}` : `Limite excedido em: ${formatarMoeda(-diferenca)}`;
+    const situacao = diferenca >= 0 ? `Limite disponível: ${formatarMoeda(diferenca)}` : `Limite excedido: ${formatarMoeda(-diferenca)}`;
     escreverDireita(situacao, larguraPagina - margem, 505, 8, true, diferenca >= 0 ? CORES.cinza : CORES.vermelho);
   }
 
