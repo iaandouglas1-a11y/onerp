@@ -20,8 +20,10 @@ export function calcularDebito(debito:DebitoFiscal,taxas:TaxaSelic[],referencia:
  if(debito.situacao==='CANCELADO')return {multa:0,juros:0,total:0,atrasado:false,pendenteIndice:false,observacao:'Cancelado'};
  if(debito.situacao==='PAGO')return {multa:null,juros:null,total:debito.valor_pago===null?null:Number(debito.valor_pago),atrasado:false,pendenteIndice:false,observacao:'Valor efetivamente pago'};
  if(!atrasado)return {multa:0,juros:0,total:centavos(principal),atrasado:false,pendenteIndice:false,observacao:'A vencer'};
- if(debito.criterio_atualizacao==='SEM_ATUALIZACAO')return {multa:0,juros:0,total:centavos(principal),atrasado:true,pendenteIndice:false,observacao:'Sem atualização automática por opção do escritório'};
- if(debito.criterio_atualizacao==='MANUAL')return {multa:Number(debito.multa_manual),juros:Number(debito.juros_manual),total:centavos(principal+Number(debito.multa_manual)+Number(debito.juros_manual)),atrasado:true,pendenteIndice:false,observacao:'Acréscimos informados manualmente; confirme a data da guia'};
+ const federal=['DAS_MEI','DAS_SIMPLES','DARF','DCTFWEB','GPS'].includes(debito.tipo_debito);
+ // Registros federais antigos também passam a usar cálculo automático, sem exigir recadastro.
+ if(!federal&&debito.criterio_atualizacao==='SEM_ATUALIZACAO')return {multa:0,juros:0,total:centavos(principal),atrasado:true,pendenteIndice:false,observacao:'Sem atualização automática por opção do escritório'};
+ if(!federal&&debito.criterio_atualizacao==='MANUAL')return {multa:Number(debito.multa_manual),juros:Number(debito.juros_manual),total:centavos(principal+Number(debito.multa_manual)+Number(debito.juros_manual)),atrasado:true,pendenteIndice:false,observacao:'Acréscimos informados manualmente; confirme a data da guia'};
  const dias=Math.floor((diaUtc(dataBase)-diaUtc(vencimento))/86400000);
  // Regra de mora federal padrão: 0,33% por dia, máximo de 20%.
  const multa=centavos(principal*Math.min(0.20,dias*0.0033));

@@ -5,7 +5,7 @@ import {conferirErro} from '@/lib/utilitarios/erros';
 import {limparTexto,textoObrigatorio,valorMonetarioBr} from '@/lib/utilitarios/formatacao';
 
 const TIPO=['DAS_MEI','DAS_SIMPLES','DARF','DCTFWEB','GPS','FGTS','ISS','ICMS','IPTU','IPVA','PARCELAMENTO','MULTA','OUTRO'];
-const CRITERIO=['FEDERAL_MORA','MANUAL','SEM_ATUALIZACAO'];
+const TIPOS_FEDERAIS=['DAS_MEI','DAS_SIMPLES','DARF','DCTFWEB','GPS'];
 const SITUACAO=['ABERTO','PAGO','CANCELADO'];
 function ler(d:FormData,c:string){return limparTexto(d.get(c));}
 function dataValida(valor:string,obrigatoria=false){if(!valor)return !obrigatoria;return /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.test(valor)&&!Number.isNaN(Date.parse(valor));}
@@ -15,19 +15,18 @@ export async function salvarDebitoFiscal(dados:FormData){
  const id=ler(dados,'id');const clienteId=textoObrigatorio(dados.get('cliente_id'),'Cliente');
  const {data:cliente,error:erroCliente}=await banco.from('clientes').select('id').eq('escritorio_id',escritorioId).eq('id',clienteId).maybeSingle();
  conferirErro(erroCliente,'Consultar cliente');if(!cliente)throw new Error('Cliente não vinculado ao escritório.');
- const tipo=ler(dados,'tipo_debito'),criterio=ler(dados,'criterio_atualizacao'),situacao=ler(dados,'situacao');
- if(!TIPO.includes(tipo)||!CRITERIO.includes(criterio)||!SITUACAO.includes(situacao))throw new Error('Tipo, regra ou situação inválida.');
- if(criterio==='FEDERAL_MORA'&&!['DAS_MEI','DAS_SIMPLES','DARF','DCTFWEB','GPS'].includes(tipo))throw new Error('O cálculo federal padrão não foi homologado para esse tipo de débito. Selecione atualização manual.');
+ const tipo=ler(dados,'tipo_debito'),situacao=ler(dados,'situacao');
+ if(!TIPO.includes(tipo)||!SITUACAO.includes(situacao))throw new Error('Tipo ou situação inválida.');
+ const criterio=TIPOS_FEDERAIS.includes(tipo)?'FEDERAL_MORA':'SEM_ATUALIZACAO';
  const vencimento=ler(dados,'vencimento'),competencia=ler(dados,'competencia'),pagamento=ler(dados,'data_pagamento');
- const dataManual=ler(dados,'data_referencia_manual');
- if(!dataValida(vencimento,true)||!dataValida(pagamento)||!dataValida(dataManual)||competencia&&!/^\d{4}-(0[1-9]|1[0-2])$/.test(competencia))throw new Error('Confira as datas informadas.');
+ if(!dataValida(vencimento,true)||!dataValida(pagamento)||competencia&&!/^\d{4}-(0[1-9]|1[0-2])$/.test(competencia))throw new Error('Confira as datas informadas.');
  if(situacao==='PAGO'&&(!pagamento||!ler(dados,'valor_pago')))throw new Error('Informe a data e o valor efetivamente pagos.');
- const registro={cliente_id:clienteId,descricao:textoObrigatorio(dados.get('descricao'),'Descrição'),tipo_debito:tipo,
-  numero_referencia:ler(dados,'numero_referencia')||null,competencia:competencia?`${competencia}-01`:null,
+ const registro={cliente_id:clienteId,descricao:tipo.replaceAll('_',' '),tipo_debito:tipo,
+  numero_referencia:null,competencia:competencia?`${competencia}-01`:null,
   vencimento,valor_principal:decimal(dados,'valor_principal',true),criterio_atualizacao:criterio,
-  juros_manual:criterio==='MANUAL'?decimal(dados,'juros_manual'):0,
-  multa_manual:criterio==='MANUAL'?decimal(dados,'multa_manual'):0,
-  data_referencia_manual:criterio==='MANUAL'?(dataManual||null):null,
+  juros_manual:0,
+  multa_manual:0,
+  data_referencia_manual:null,
   situacao,data_pagamento:situacao==='PAGO'?pagamento:null,
   valor_pago:situacao==='PAGO'?decimal(dados,'valor_pago',true):null,
   observacoes:ler(dados,'observacoes')||null,atualizado_em:new Date().toISOString()};
