@@ -86,7 +86,7 @@ export async function GET(requisicao: NextRequest) {
       limiteAnual: limite,
       percentualAnual: limite === null || limite <= 0 ? null : totais.total / limite,
       meses,
-    }, `faturamento-mei-${ano}-${cliente.id}`);
+    }, `FATURAMENTO MEI ${mes.slice(5,7)}-${ano} - ${cliente.razao_social.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[\\/:*?"<>|\r\n]/g, ' ').replace(/\s+/g, ' ').trim().slice(0,100)}`);
   }
 
   const registros = movimentos.filter(item => tipo === 'convencional' ? porId[item.cliente_id]?.regime_tributario !== 'MEI' && Boolean(porId[item.cliente_id]) : Boolean(porId[item.cliente_id]));

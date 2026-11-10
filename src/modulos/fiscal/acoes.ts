@@ -30,10 +30,10 @@ export async function salvarMovimentoFiscal(dados:FormData) {
   if(categoriaId){const {data:categoria}=await banco.from('categorias_fiscais').select('id,tipo_movimento').eq('id',categoriaId).eq('escritorio_id',escritorioId).maybeSingle();if(!categoria||categoria.tipo_movimento!==movimento.tipo_movimento)throw new Error('Categoria incompatível com o tipo de movimento.');}
   const id=ler(dados,'id');
   if(id){
-    const {data:existente,error:erroExistente}=await banco.from('movimentacoes_fiscais').select('id,origem,cliente_id').eq('id',id).eq('escritorio_id',escritorioId).maybeSingle();
+    const {data:existente,error:erroExistente}=await banco.from('movimentacoes_fiscais').select('id,origem,cliente_id,categoria_id,numero_documento').eq('id',id).eq('escritorio_id',escritorioId).maybeSingle();
     conferirErro(erroExistente,'Consultar lançamento');
     if(!existente||existente.cliente_id!==clienteId)throw new Error('Lançamento não encontrado para este cliente.');
-    const {error:erro}=await banco.from('movimentacoes_fiscais').update({...movimento,cliente_id:clienteId,categoria_id:categoriaId||null}).eq('id',id).eq('escritorio_id',escritorioId);
+    const {error:erro}=await banco.from('movimentacoes_fiscais').update({...movimento,cliente_id:clienteId,categoria_id:dados.has('categoria_id')?categoriaId||null:existente.categoria_id||null,numero_documento:dados.has('numero_documento')?movimento.numero_documento:existente.numero_documento??null}).eq('id',id).eq('escritorio_id',escritorioId);
     conferirErro(erro,'Atualizar movimento');
   }else{
     const {error:erro}=await banco.from('movimentacoes_fiscais').insert({...movimento,cliente_id:clienteId,categoria_id:categoriaId||null,escritorio_id:escritorioId,criado_por:usuario.id,origem:'MANUAL'});

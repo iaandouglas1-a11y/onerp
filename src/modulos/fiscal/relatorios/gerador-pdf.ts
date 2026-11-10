@@ -250,28 +250,29 @@ export async function gerarRelatorioMeiPdf(dados: RelatorioMeiPdf): Promise<Uint
   }
 
   function barraProgresso(x: number, y: number, w: number, h: number, proporcao: number | null) {
+    // A escala principal representa sempre 100% do limite aplicável.
+    // A parte não utilizada permanece cinza, inclusive quando o faturamento é zero.
     caixa(x, y, w, h, CORES.claro);
-    if (proporcao == null || !Number.isFinite(proporcao) || proporcao <= 0) return;
-    if (proporcao <= 1) {
-      pagina.drawRectangle({ x, y, width: w * proporcao, height: h, color: corPercentual(proporcao) });
-      return;
+    if (proporcao == null || !Number.isFinite(proporcao)) return;
+    const utilizado = Math.max(0, proporcao);
+    if (utilizado > 0) {
+      pagina.drawRectangle({ x, y, width: w * Math.min(1, utilizado), height: h, color: CORES.verde });
     }
-    // Representação proporcional do valor acumulado total dentro da largura fixa:
-    // até 100% do limite (verde), acima do limite (vermelho).
-    const parteLimite = w / proporcao;
-    pagina.drawRectangle({ x, y, width: parteLimite, height: h, color: CORES.verde });
-    pagina.drawRectangle({ x: x + parteLimite, y, width: w - parteLimite, height: h, color: CORES.vermelho });
-    pagina.drawLine({ start: { x: x + parteLimite, y }, end: { x: x + parteLimite, y: y + h }, thickness: 0.7, color: CORES.fundo });
+    if (utilizado > 1) {
+      // Uma segunda faixa vermelha indica excedente, sem alterar a escala de 100%.
+      const larguraExcedente = Math.min(w, w * (utilizado - 1));
+      pagina.drawRectangle({ x, y: y - 4, width: larguraExcedente, height: 3, color: CORES.vermelho });
+    }
   }
 
   // Cabeçalho visual da marca, sem o texto "On ERP".
   caixa(0, 835.89, larguraPagina, 6, CORES.verde);
   // A imagem institucional é recortada para eliminar margens transparentes.
   // Assim a marca permanece grande, nítida e proporcional, sem encostar no título.
-  const larguraLogo = 106;
+  const larguraLogo = 86;
   const alturaLogo = larguraLogo * (logo.height / logo.width);
   const xLogo = margem;
-  const yLogo = 746;
+  const yLogo = 762;
   pagina.drawImage(logo, { x: xLogo, y: yLogo, width: larguraLogo, height: alturaLogo });
   const xTitulo = xLogo + larguraLogo + 18;
   escrever('RELATÓRIO DE FATURAMENTO MEI', xTitulo, 795, 13, true);
@@ -299,7 +300,13 @@ export async function gerarRelatorioMeiPdf(dados: RelatorioMeiPdf): Promise<Uint
 
   escrever('Progressão anual do limite', margem, 537, 9, true);
   escreverDireita(percentual(dados.percentualAnual), larguraPagina - margem, 537, 9, true, corPercentual(dados.percentualAnual));
-  barraProgresso(margem, 520, largura, 8, dados.percentualAnual);
+  barraProgresso(margem, 519, largura, 10, dados.percentualAnual);
+  escrever(dados.limiteAnual == null ? 'Limite não configurado' : `100% = ${formatarMoeda(dados.limiteAnual)} (limite efetivo)`, margem, 505, 8, false, CORES.cinza);
+  if (dados.limiteAnual != null && dados.limiteAnual > 0) {
+    const diferenca = dados.limiteAnual - dados.receitaAnual;
+    const situacao = diferenca >= 0 ? `Disponível para faturar: ${formatarMoeda(diferenca)}` : `Limite excedido em: ${formatarMoeda(-diferenca)}`;
+    escreverDireita(situacao, larguraPagina - margem, 505, 8, true, diferenca >= 0 ? CORES.cinza : CORES.vermelho);
+  }
 
   escrever('Faturamento mensal por atividade', margem, 482, 11, true);
   const topoTabela = 460;
