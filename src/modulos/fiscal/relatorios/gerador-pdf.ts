@@ -319,7 +319,7 @@ export async function gerarRelatorioMeiPdf(dados: RelatorioMeiPdf): Promise<Uint
     escreverDireita(situacao, larguraPagina - margem, 505, 8, true, diferenca >= 0 ? CORES.cinza : CORES.vermelho);
   }
 
-  escrever('Faturamento mensal por atividade', margem, 482, 11, true);
+  escrever('Faturamento Mensal', margem, 482, 11, true);
   const topoTabela = 460;
   const alturaCabecalho = 27;
   const alturaLinha = 22;
