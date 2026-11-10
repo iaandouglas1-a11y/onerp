@@ -49,7 +49,7 @@ export default async function DebitosFiscais({searchParams}:{searchParams:Promis
    </tr>})}</tbody></table></div>}
   </Cartao>
   {(parametros.novo==='1'||edicao)&&<JanelaModal titulo={edicao?'Editar débito':'Cadastrar débito fiscal'} descricao="Informe o valor principal e selecione a regra de atualização adequada ao débito." fecharEm={base} largura="ampla">
-   <FormularioContinuo acao={salvarDebitoFiscal} modo={edicao?'edicao':'cadastro'} rotaNovoAposEdicao={base} className="grade colunas-2" manterCampos={['cliente_id']} focarClienteAposSalvar>
+   <FormularioContinuo acao={salvarDebitoFiscal} modo={edicao?'edicao':'cadastro'} rotaNovoAposEdicao={base} className="grade colunas-2 debitos-formulario" manterCampos={['cliente_id']} focarClienteAposSalvar>
     {edicao&&<input type="hidden" name="id" value={edicao.id}/>}
     <Campo rotulo="Cliente" nome="cliente_id" obrigatorio padrao={edicao?.cliente_id??selecionado??''} opcoes={clientes.map(c=>({valor:c.id,rotulo:c.razao_social}))}/>
     <Campo rotulo="Tipo de débito" nome="tipo_debito" obrigatorio padrao={edicao?.tipo_debito??'DAS_MEI'} opcoes={TIPOS}/>
@@ -59,10 +59,10 @@ export default async function DebitosFiscais({searchParams}:{searchParams:Promis
     <Campo rotulo="Situação" nome="situacao" obrigatorio padrao={edicao?.situacao??'ABERTO'} opcoes={SITUACOES}/>
     <Campo rotulo="Data de pagamento (se pago)" nome="data_pagamento" tipo="date" padrao={edicao?.data_pagamento??''}/>
     <Campo rotulo="Valor efetivamente pago (R$)" nome="valor_pago" padrao={edicao?.valor_pago??''}/>
-    <Campo rotulo="Observações" nome="observacoes" padrao={edicao?.observacoes??''}/>
-    <div><button type="submit" className="botao primario">{edicao?'Salvar alterações':'Salvar'}</button></div>
+    <div className="debitos-observacoes"><Campo rotulo="Observações (opcional)" nome="observacoes" padrao={edicao?.observacoes??''} placeholder="Ex.: referência, processo ou acordo"/></div>
+    <p className="debitos-nota muted pequeno">Multa e Selic são calculadas automaticamente para obrigações federais compatíveis. Tributos estaduais, municipais e parcelamentos exigem conferência com a guia oficial.</p>
+    <div className="debitos-modal-acoes"><button type="submit" className="botao primario">{edicao?'Salvar alterações':'Salvar'}</button></div>
    </FormularioContinuo>
-   <p className="muted pequeno" style={{marginTop:12}}>Multa e Selic são calculadas automaticamente para obrigações federais compatíveis. Tributos estaduais, municipais e parcelamentos exigem conferência com a guia oficial; não recebem a regra federal de forma indiscriminada.</p>
   </JanelaModal>}
   {exclusao&&<JanelaModal titulo="Excluir débito?" descricao={`O registro “${exclusao.descricao}” será excluído permanentemente.`} fecharEm={base}>
    <FormularioContinuo acao={excluirDebitoFiscal} modo="edicao" rotaNovoAposEdicao={base}>
