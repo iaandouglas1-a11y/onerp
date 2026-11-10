@@ -250,18 +250,30 @@ export async function gerarRelatorioMeiPdf(dados: RelatorioMeiPdf): Promise<Uint
   }
 
   function barraProgresso(x: number, y: number, w: number, h: number, proporcao: number | null) {
-    // A escala principal representa sempre 100% do limite aplicável.
-    // A parte não utilizada permanece cinza, inclusive quando o faturamento é zero.
-    caixa(x, y, w, h, CORES.claro);
-    if (proporcao == null || !Number.isFinite(proporcao)) return;
-    const utilizado = Math.max(0, proporcao);
-    if (utilizado > 0) {
-      pagina.drawRectangle({ x, y, width: w * Math.min(1, utilizado), height: h, color: CORES.verde });
+    // Uma única barra: verde até 100%; cinza apenas para a margem disponível;
+    // acima de 100%, o excedente continua em vermelho até o fim da barra.
+    // A largura dos segmentos é proporcional à escala total exibida.
+    const valido = proporcao != null && Number.isFinite(proporcao);
+    const utilizado = valido ? Math.max(0, proporcao) : 0;
+    const acimaDoLimite = utilizado > 1;
+    const escala = acimaDoLimite ? utilizado : 1;
+    const larguraVerde = w * Math.min(utilizado, 1) / escala;
+    const larguraVermelha = acimaDoLimite ? w - larguraVerde : 0;
+
+    // O fundo cinza só representa capacidade não utilizada (nunca excedente).
+    if (!acimaDoLimite) caixa(x, y, w, h, CORES.claro);
+    if (larguraVerde > 0) caixa(x, y, larguraVerde, h, CORES.verde);
+    if (larguraVermelha > 0) caixa(x + larguraVerde, y, larguraVermelha, h, CORES.vermelho);
+
+    // Identificações na própria barra, sem criar uma segunda faixa.
+    const rotuloVerde = acimaDoLimite ? '100%' : percentual(utilizado);
+    const rotuloVermelho = `+${percentual(utilizado - 1)}`;
+    const tamanho = 7;
+    if (larguraVerde >= negrito.widthOfTextAtSize(rotuloVerde, tamanho) + 12) {
+      escrever(rotuloVerde, x + (larguraVerde - negrito.widthOfTextAtSize(rotuloVerde, tamanho)) / 2, y + (h - tamanho) / 2 + 1, tamanho, true, CORES.fundo);
     }
-    if (utilizado > 1) {
-      // Uma segunda faixa vermelha indica excedente, sem alterar a escala de 100%.
-      const larguraExcedente = Math.min(w, w * (utilizado - 1));
-      pagina.drawRectangle({ x, y: y - 4, width: larguraExcedente, height: 3, color: CORES.vermelho });
+    if (larguraVermelha >= negrito.widthOfTextAtSize(rotuloVermelho, tamanho) + 12) {
+      escrever(rotuloVermelho, x + larguraVerde + (larguraVermelha - negrito.widthOfTextAtSize(rotuloVermelho, tamanho)) / 2, y + (h - tamanho) / 2 + 1, tamanho, true, CORES.fundo);
     }
   }
 
@@ -300,7 +312,7 @@ export async function gerarRelatorioMeiPdf(dados: RelatorioMeiPdf): Promise<Uint
 
   escrever('Progressão anual do limite', margem, 537, 9, true);
   escreverDireita(percentual(dados.percentualAnual), larguraPagina - margem, 537, 9, true, corPercentual(dados.percentualAnual));
-  barraProgresso(margem, 519, largura, 10, dados.percentualAnual);
+  barraProgresso(margem, 518, largura, 12, dados.limiteAnual != null && dados.limiteAnual > 0 ? dados.receitaAnual / dados.limiteAnual : null);
   escrever(dados.limiteAnual == null ? 'Limite não configurado' : `100% = ${formatarMoeda(dados.limiteAnual)} (limite efetivo)`, margem, 505, 8, false, CORES.cinza);
   if (dados.limiteAnual != null && dados.limiteAnual > 0) {
     const diferenca = dados.limiteAnual - dados.receitaAnual;
