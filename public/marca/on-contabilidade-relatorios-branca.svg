@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <g transform="translate(-8,45)" fill="none" stroke-width="26" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M493 335.2 A100 100 0 1 1 387 335.2" stroke="#0B1220"/>
+    <line x1="440" y1="318" x2="440" y2="404" stroke="#6BA32B"/>
+    <path d="M600 520 V410 A50 50 0 0 1 700 410 V520" stroke="#6BA32B"/>
+    <text x="520" y="620" text-anchor="middle" font-family="Montserrat, 'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="400" letter-spacing="11" fill="#5B6475" stroke="none">CONTABILIDADE</text>
+  </g>
+</svg>

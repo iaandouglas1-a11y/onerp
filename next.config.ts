@@ -1,19 +1,7 @@
-import type { NextConfig } from "next";
-import withPWA from "next-pwa";
-
-const nextConfig: NextConfig = {
+import type { NextConfig } from 'next';
+const configuracao: NextConfig = {
   reactStrictMode: true,
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: false,
-  },
+  poweredByHeader: false,
+  experimental: { serverActions: { bodySizeLimit: "9mb" } },
 };
-
-export default withPWA({
-  dest: "public",
-  register: true,
-  skipWaiting: true,
-  disable: process.env.NODE_ENV === "development",
-})(nextConfig);
+export default configuracao;
