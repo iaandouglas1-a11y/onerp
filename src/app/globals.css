@@ -539,3 +539,47 @@ form[data-salvando="true"] :is(button[type="submit"],input[type="submit"])::afte
 .debitos-modal-acoes{grid-column:1/-1;display:flex;justify-content:flex-end;align-items:center;border-top:1px solid #e4e9ef;padding-top:16px;margin-top:2px;order:10}
 .debitos-modal-acoes .botao{min-width:118px;min-height:42px;font-size:13px;font-weight:650}
 @media(max-width:800px){.debitos-formulario{grid-template-columns:1fr;gap:13px}.debitos-modal-acoes .botao{width:100%}}
+
+/* Filtros de consulta de débitos fiscais */
+.debitos-filtros-status{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:14px}
+.debitos-filtro-botao{min-height:34px;padding:6px 12px;font-size:13px;text-decoration:none}
+.debitos-filtro-botao.ativo{background:#e8f3df;border-color:#7cb93c;color:#2b611b;font-weight:650}
+@media(max-width:640px){.debitos-filtros-status{align-items:flex-start;flex-direction:column}}
+
+/* Ampliação responsiva do espaço operacional — desktop com painel contextual */
+@media(min-width:801px){
+ .conteudo{max-width:2100px;width:100%;padding:28px clamp(18px,1.6vw,36px);margin-inline:auto}
+ .on-workspace{display:block;min-width:0}
+ .on-workspace-main{min-width:0}
+ .grade{gap:16px}
+ .cartao{min-width:0}
+ .tabela-wrapper{max-width:100%}
+ .on-grafico-lista{display:grid;gap:15px}
+ .on-grafico-linha{min-width:0}
+ .on-grafico-legendas{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;margin-bottom:7px}
+ .on-grafico-legendas span{color:#607088;overflow:hidden;text-overflow:ellipsis}
+ .on-grafico-legendas strong{font-variant-numeric:tabular-nums;font-weight:650;white-space:nowrap}
+ .on-grafico-trilha{height:10px;background:#e9edf1;overflow:hidden;border-radius:999px}
+ .on-grafico-trilha>span{display:block;height:100%;border-radius:999px}
+}
+.on-painel-operacional{display:none}
+@media(min-width:1450px){
+ .on-workspace{display:grid;grid-template-columns:minmax(0,1fr) minmax(255px,280px);align-items:start;gap:18px}
+ .on-painel-operacional{display:grid;gap:16px;position:sticky;top:96px;align-self:start;max-height:calc(100vh - 110px);overflow-y:auto;scrollbar-width:thin}
+ .on-painel-bloco{background:#fff;border:1px solid var(--borda);border-radius:14px;padding:19px;box-shadow:0 3px 16px rgba(10,17,28,.03)}
+ .on-painel-icone{width:38px;height:38px;display:grid;place-items:center;border-radius:10px;background:#eef6e9;color:#5a9133;margin-bottom:12px}
+ .on-painel-bloco h2{font-size:15px;margin-bottom:7px}
+ .on-painel-bloco p{font-size:12px;color:#708094;line-height:1.6;margin:0 0 15px}
+ .on-painel-links{border-top:1px solid #eef1f4;padding-top:6px}
+ .on-painel-links a,.on-painel-link{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:36px;padding:8px 0;font-size:12px;color:#45566a}
+ .on-painel-links a:hover,.on-painel-link:hover,.on-painel-links a[aria-current=page]{color:#477d26}
+ .on-painel-titulo{display:flex;align-items:center;gap:9px;font-weight:650;font-size:13px;margin-bottom:10px}
+ .on-painel-titulo svg{color:#6a9a42;flex-shrink:0}
+ .on-painel-rodape{display:flex;gap:8px;color:#84909b;font-size:10px;align-items:center;line-height:1.5;padding:0 5px}
+}
+@media(max-width:800px){
+ .on-grafico-lista{display:grid;gap:14px}
+ .on-grafico-legendas{display:flex;justify-content:space-between;gap:10px;font-size:12px;margin-bottom:6px}
+ .on-grafico-trilha{height:9px;background:#e9edf1;border-radius:99px;overflow:hidden}
+ .on-grafico-trilha>span{display:block;height:100%;border-radius:99px}
+}

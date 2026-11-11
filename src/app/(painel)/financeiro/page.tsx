@@ -1,3 +1,4 @@
+import {GraficoBarras} from '@/componentes/globais/graficos-operacionais';
 import Link from 'next/link';
 import {CabecalhoPagina,Cartao,Indicador,Etiqueta,ListaVazia} from '@/componentes/globais/elementos';
 import {carregarFinanceiro} from '@/modulos/financeiro/consultas';
@@ -17,5 +18,6 @@ export default async function PaginaFinanceiro(){
  {pendentes.length===0?<ListaVazia texto="Nenhuma cobrança em aberto."/>:<div className="tabela-wrapper"><table className="tabela"><thead><tr><th>Cliente</th><th>Vencimento</th><th>Saldo</th><th>Situação</th></tr></thead><tbody>{pendentes.map(r=><tr key={r.id}><td>{clientes.get(r.cliente_id)||'—'}</td><td>{dataBrasileira(r.data_vencimento)}</td><td>{moeda(saldoRecebivel(r,dados.recebimentos).saldo)}</td><td><Etiqueta valor={r.data_vencimento<hoje()?'VENCIDO':r.situacao}/></td></tr>)}</tbody></table></div>}</Cartao>
  <Cartao titulo="Últimas movimentações" acoes={<Link href="/financeiro/movimentacoes" className="botao">Ver extrato</Link>}>
  {recentes.length===0?<ListaVazia texto="Nenhuma movimentação registrada."/>:<div className="tabela-wrapper"><table className="tabela"><thead><tr><th>Data</th><th>Histórico</th><th>Tipo</th><th>Valor</th></tr></thead><tbody>{recentes.map(m=><tr key={m.id}><td>{dataBrasileira(m.data_movimento)}</td><td>{m.descricao||'—'}</td><td><Etiqueta valor={m.tipo}/></td><td>{moeda(m.valor)}</td></tr>)}</tbody></table></div>}</Cartao></div>
+ <div className="grade colunas-2" style={{marginTop:16}}><GraficoBarras titulo="Composição financeira" subtitulo="Valores consolidados do período" moedaValores itens={[{rotulo:"Recebimentos",valor:indicadores.receitas},{rotulo:"Pagamentos",valor:indicadores.despesas,cor:"#d87465"},{rotulo:"Contas a receber",valor:indicadores.emAberto,cor:"#c4a15d"},{rotulo:"Contas a pagar",valor:indicadores.contasPagar,cor:"#7d92a6"}]}/><Cartao titulo="Próximas ações"><div className="item-lista"><Link href="/financeiro/recebimentos">Conferir cobranças pendentes</Link></div><div className="item-lista"><Link href="/financeiro/honorarios">Gerar honorários recorrentes</Link></div><div className="item-lista"><Link href="/financeiro/fluxo-de-caixa">Avaliar fluxo de caixa</Link></div><div className="item-lista"><Link href="/financeiro/relatorios">Exportar relatório gerencial</Link></div></Cartao></div>
  </>;
 }
