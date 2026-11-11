@@ -583,3 +583,20 @@ form[data-salvando="true"] :is(button[type="submit"],input[type="submit"])::afte
  .on-grafico-trilha{height:9px;background:#e9edf1;border-radius:99px;overflow:hidden}
  .on-grafico-trilha>span{display:block;height:100%;border-radius:99px}
 }
+
+
+/* Refino de posição: conteúdo operacional à esquerda e informações de apoio à direita. */
+@media (min-width:1450px){
+  .on-workspace{direction:ltr;grid-template-areas:"principal apoio";grid-template-columns:minmax(0,1fr) minmax(255px,280px)}
+  .on-workspace-main{grid-area:principal;min-width:0}
+  .on-painel-operacional{grid-area:apoio;grid-column:2;min-width:0;direction:ltr}
+}
+/* Pares de análise: ações/rotinas à esquerda, gráfico complementar à direita. */
+@media (min-width:801px){
+  .grade.colunas-2:has(> .on-grafico):has(> .cartao:not(.on-grafico)) > .on-grafico{
+    grid-column:2;grid-row:1;
+  }
+  .grade.colunas-2:has(> .on-grafico):has(> .cartao:not(.on-grafico)) > .cartao:not(.on-grafico){
+    grid-column:1;grid-row:1;
+  }
+}
