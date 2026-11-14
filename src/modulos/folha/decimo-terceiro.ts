@@ -1,6 +1,6 @@
 import { arredondar, somarCentavos, conferirRegras, contribuicaoInss, impostoIrrf, type ParametrosFolha, type MemoriaContracheque, type EventoCalculado } from './calculos';
 export type TipoDecimoTerceiro = 'ADIANTAMENTO_13'|'SEGUNDA_PARCELA_13';
-export type Memoria13 = MemoriaContracheque & { tipo_13:TipoDecimoTerceiro; ano_13:number; avos_13:number; antecipacao_13:number; remuneracao_13:number };
+export type Memoria13 = MemoriaContracheque & { tipo_13:TipoDecimoTerceiro; ano_13:number; avos_13:number; antecipacao_13:number; remuneracao_13:number; medias_trabalhistas?:{origem:string;competencia_limite:string;divisor:number;media_monetaria:number;media_horas:number;valor:number;linhas:import('./medias').LinhaMedia[];avisos:string[]} };
 /** Conta mês com pelo menos 15 dias no vínculo; afastamentos e períodos especiais devem ser conferidos antes do processamento. */
 export function avosDecimoTerceiro(admissao:string,ano:number):number {
  const data=new Date(`${admissao}T12:00:00Z`);

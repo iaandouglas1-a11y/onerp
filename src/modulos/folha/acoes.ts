@@ -73,7 +73,7 @@ export async function salvarEvento(dados:FormData){
  const percentualAdicional=Number(ler(dados,'percentual_adicional')||0);
  if(!Number.isFinite(percentualAdicional)||percentualAdicional<0||percentualAdicional>300)throw new Error('Adicional inválido.');
  const cfg={...configuracaoAnterior,tipo_referencia:tipoReferencia,percentual_adicional:tipoReferencia==='HORAS'?percentualAdicional:0,calculo:tipoReferencia==='HORAS'?'HORAS_SALARIO':tipoReferencia==='DIAS'?'DIAS_SALARIO':'VALOR_INFORMADO',incide_inss:tipo!=='INFORMATIVO'&&booleano('incide_inss'),incide_fgts:tipo!=='INFORMATIVO'&&booleano('incide_fgts'),
- incide_irrf:tipo!=='INFORMATIVO'&&booleano('incide_irrf'),reduz_base:tipo==='DESCONTO'&&booleano('reduz_base')};
+ incide_irrf:tipo!=='INFORMATIVO'&&booleano('incide_irrf'),integra_media_13:tipo==='PROVENTO'&&booleano('integra_media_13'),integra_media_ferias:tipo==='PROVENTO'&&booleano('integra_media_ferias'),reduz_base:tipo==='DESCONTO'&&booleano('reduz_base')};
  const registro={codigo,nome:textoObrigatorio(dados.get('nome'),'Descrição'),tipo_evento:tipo,configuracao_calculo:cfg,ativo:ler(dados,'ativo')!=='nao'};
  if(id){const {error:erro}=await banco.from('eventos_folha').update(registro).eq('id',id).eq('escritorio_id',escritorioId);conferirErro(erro,'Editar evento');}
  else {const {error:erro}=await banco.from('eventos_folha').insert({escritorio_id:escritorioId,...registro});conferirErro(erro,'Cadastrar evento');}

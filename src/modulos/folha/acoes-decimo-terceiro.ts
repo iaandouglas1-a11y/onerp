@@ -4,6 +4,7 @@ import {exigirEdicao} from '@/lib/seguranca/contexto';
 import {conferirErro} from '@/lib/utilitarios/erros';
 import {calcularDecimoTerceiro,avosDecimoTerceiro,type TipoDecimoTerceiro} from './decimo-terceiro';
 import type {ParametrosFolha} from './calculos';
+import {mediasEmpregados} from './consultas-medias';
 const rota='/folha/decimo-terceiro';
 export async function processarDecimoTerceiro(dados:FormData):Promise<{sucesso:boolean;mensagem:string}>{
  const {banco,escritorioId,usuario}=await exigirEdicao();
@@ -12,15 +13,23 @@ export async function processarDecimoTerceiro(dados:FormData):Promise<{sucesso:b
  const ano=Number(dados.get('ano'));
  if(!/^[0-9a-f-]{36}$/i.test(clienteId)||!['ADIANTAMENTO_13','SEGUNDA_PARCELA_13'].includes(tipo)||ano!==2026)
   throw new Error('Empresa, tipo ou exercício inválido.');
- // Ajustes salariais informados apenas para processamento, permanecendo na memória histórica.
- const adicionais=Number(dados.get('adicionais')||0),mediaVariavel=Number(dados.get('media_variavel')||0);
- if(![adicionais,mediaVariavel].every(v=>Number.isFinite(v)&&v>=0&&v<=10000000))throw new Error('Valores adicionais inválidos.');
- if((adicionais||mediaVariavel)&&String(dados.get('confirmacao_medias'))!=='sim')throw new Error('Confirme a conferência dos adicionais e médias.');
+ // Base variável individual calculada sobre contracheques mensais CONFERIDOS.
+ const competenciaLimite=String(dados.get('competencia_limite')||'');
+ if(!/^2026-(0[1-9]|1[0-2])$/.test(competenciaLimite))throw new Error('Informe a última competência mensal conferida de 2026.');
+ if(tipo==='ADIANTAMENTO_13'&&competenciaLimite>'2026-11')throw new Error('Não utilize dezembro para antecipar o 13º.');
+ if(tipo==='SEGUNDA_PARCELA_13'&&competenciaLimite<'2026-12'&&String(dados.get('confirmacao_media_provisoria'))!=='sim')
+  throw new Error('A 2ª parcela será provisória sem dezembro. Confirme o ajuste complementar obrigatório ao fechamento anual.');
  const {data:cliente,error:erroCliente}=await banco.from('clientes').select('id,razao_social,cpf_cnpj').eq('id',clienteId).eq('escritorio_id',escritorioId).maybeSingle();
  conferirErro(erroCliente);if(!cliente)throw new Error('Empresa não localizada.');
  const {data:empregados,error:erroEmpregados}=await banco.from('empregados').select('*').eq('escritorio_id',escritorioId).eq('cliente_id',clienteId).eq('situacao','ATIVO').order('nome_completo');
  conferirErro(erroEmpregados);if(!empregados?.length)throw new Error('Não há empregados ativos para processamento.');
  if(empregados.length>40)throw new Error('Operação limitada a 40 empregados.');
+ const medias=await mediasEmpregados(banco,escritorioId,clienteId,empregados,'13',`${ano}-01`,competenciaLimite);
+ const inconsistencias=empregados.flatMap(emp=>{
+  const media=medias.get(emp.id);
+  return (media?.pendencias||[]).map(p=>`${emp.nome_completo}: ${p}`);
+ });
+ if(inconsistencias.length)throw new Error(`Corrija as competências antes de calcular o 13º: ${inconsistencias.slice(0,8).join('; ')}${inconsistencias.length>8?' ...':''}`);
  // Dados de parâmetros são os mesmos já aprovados para folha mensal.
  const dataRegra=`${ano}-12-01`;
  const {data:regras,error:erroRegras}=await banco.from('versoes_regras_folha').select('id,tipo_regra,inicio_vigencia,fim_vigencia,parametros,aprovado_em').eq('escritorio_id',escritorioId).lte('inicio_vigencia',dataRegra).not('aprovado_em','is',null);
@@ -44,10 +53,13 @@ export async function processarDecimoTerceiro(dados:FormData):Promise<{sucesso:b
   const memoriaAdiantamento=adiantamento?.memoria_calculo as {total_proventos?:number}|undefined;
   const antecipado=tipo==='SEGUNDA_PARCELA_13'?Number(memoriaAdiantamento?.total_proventos):0;
   if(!Number.isFinite(antecipado))throw new Error('Histórico do adiantamento inválido.');
-  const memoria=calcularDecimoTerceiro({ano:2026,tipo,avos,adicionais,mediaVariavel,adiantamentoPago:antecipado,
+  const media=medias.get(empregado.id);
+  if(!media)throw new Error(`Média indisponível para ${empregado.nome_completo}.`);
+  const memoriaBase=calcularDecimoTerceiro({ano:2026,tipo,avos,adicionais:0,mediaVariavel:media.mediaTotal,adiantamentoPago:antecipado,
     empresa:{nome:cliente.razao_social,cnpj:cliente.cpf_cnpj,cidade:[endereco?.cidade,endereco?.uf].filter(Boolean).join(' - '),endereco:[endereco?.logradouro,endereco?.numero].filter(Boolean).join(', ')},
     funcionario:{nome:empregado.nome_completo,codigo:empregado.codigo_funcionario||'0001',cpf:empregado.cpf||'',cbo:empregado.cbo||'',cargo:empregado.cargo||'',salario_base:Number(empregado.salario)},
     dependentes:Number(empregado.dependentes_irrf||0),parametros});
+  const memoria={...memoriaBase,medias_trabalhistas:{origem:'contracheques_folha',competencia_limite:competenciaLimite,divisor:media.divisor,media_monetaria:media.mediaMonetaria,media_horas:media.mediaHorasValorizada,valor:media.mediaTotal,linhas:media.linhas,avisos:media.avisos}};
   saida.push({empregado:empregado.id,memoria,id:atual?.id||null});
  }
  if(!saida.length)throw new Error('Nenhum empregado com avos elegíveis.');

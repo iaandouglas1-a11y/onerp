@@ -5,7 +5,7 @@ import type { EventoFolha } from '@/modulos/folha/consultas';
 const opcoes=[{valor:'nao',rotulo:'Não'},{valor:'sim',rotulo:'Sim'}];
 export function FormularioEvento({evento}:{evento?:EventoFolha}){
  const cfg=evento?.configuracao_calculo||{};
- const padrao=(chave:string)=>cfg[chave]===true?'sim':'nao';
+ const padrao=(chave:string)=>{if(cfg[chave]===true)return 'sim';if(cfg[chave]===false)return 'nao';return chave.startsWith('integra_media_')&&/hora(s)? extra(s)?|dsr.*extra|rsr.*extra/i.test(evento?.nome||'')?'sim':'nao';};
  return <FormularioContinuo acao={salvarEvento} modo={evento?'edicao':'cadastro'} rotaNovoAposEdicao="/folha/eventos?novo=1" className="grade-formulario">
   {evento&&<input type="hidden" name="id" value={evento.id}/>}
   <Campo nome="codigo" rotulo="Código do evento" tipo="number" min="1" step="1" obrigatorio padrao={evento?.codigo} placeholder="29"/>
@@ -19,6 +19,9 @@ export function FormularioEvento({evento}:{evento?:EventoFolha}){
   <Campo nome="incide_inss" rotulo="Integra base do INSS?" padrao={padrao('incide_inss')} opcoes={opcoes}/>
   <Campo nome="incide_irrf" rotulo="Integra base do IRRF?" padrao={padrao('incide_irrf')} opcoes={opcoes}/>
   <Campo nome="incide_fgts" rotulo="Integra base do FGTS?" padrao={padrao('incide_fgts')} opcoes={opcoes}/>
+  <Campo nome="integra_media_13" rotulo="Integra médias do 13º?" padrao={padrao('integra_media_13')} opcoes={opcoes}/>
+  <Campo nome="integra_media_ferias" rotulo="Integra médias das férias?" padrao={padrao('integra_media_ferias')} opcoes={opcoes}/>
+  <div className="largo aviso-configuracao">Horas extras históricas com descrição “Hora extra” são identificadas automaticamente. Para DSR sobre extras e outras verbas, revise as marcações.</div>
   <Campo nome="reduz_base" rotulo="Desconto reduz as bases?" padrao={padrao('reduz_base')} opcoes={opcoes}/>
   <div className="largo linha" style={{justifyContent:'flex-end'}}><button className="botao primario" type="submit">{evento?'Salvar alterações':'Salvar'}</button></div>
  </FormularioContinuo>;

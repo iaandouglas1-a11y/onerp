@@ -14,7 +14,7 @@ const modulos = [
   ] },
   { titulo: 'Contábil', rota: '', icone: BookOpen, itens: [] },
   { titulo: 'Folha', rota: '/folha', icone: UsersRound, itens: [
-    ['Visão geral', '/folha'], ['Empregados', '/folha/empregados'], ['Eventos', '/folha/eventos'], ['Lançamentos', '/folha/lancamentos'], ['Contracheques', '/folha/contracheques'], ['13º salário', '/folha/decimo-terceiro']
+    ['Visão geral', '/folha'], ['Empregados', '/folha/empregados'], ['Eventos', '/folha/eventos'], ['Lançamentos', '/folha/lancamentos'], ['Contracheques', '/folha/contracheques'], ['13º salário', '/folha/decimo-terceiro'], ['Médias de férias', '/folha/medias']
   ] },
   { titulo: 'Financeiro', rota: '/financeiro', icone: Wallet, itens: [
     ['Visão geral', '/financeiro'], ['Honorários', '/financeiro/honorarios'], ['Recebimentos', '/financeiro/recebimentos'], ['Despesas', '/financeiro/despesas'], ['Movimentações', '/financeiro/movimentacoes'], ['Contas', '/financeiro/contas'], ['Fluxo de caixa', '/financeiro/fluxo-de-caixa'], ['Relatórios', '/financeiro/relatorios']
