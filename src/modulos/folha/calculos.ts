@@ -25,7 +25,24 @@ export type MemoriaContracheque = {
   aliquota_irrf:number; inss_desconto:number; irrf_desconto:number; dependentes_irrf:number;
   regras:{INSS:string;IRRF:string;FGTS:string};
 };
+/** Arredondamento monetário para rubricas/valores de entrada (não usar nas faixas do INSS). */
 export function arredondar(valor:number):number { return Math.round((valor + Math.sign(valor)*1e-9)*100)/100; }
+/**
+ * Contribuição previdenciária nos totalizadores eSocial: TRUNCAR cada faixa a 2 casas.
+ * Usa centavos inteiros e alíquotas com 9 casas para evitar erros IEEE-754
+ * (ex.: 121.575 não pode virar 121.58).
+ */
+export function truncarAliquotaEmCentavos(valor:number, aliquota:number):number {
+  if(!Number.isFinite(valor)||valor<0||!Number.isFinite(aliquota)||aliquota<0||aliquota>1)
+    throw new Error('Base ou alíquota previdenciária inválida.');
+  const centavos=BigInt(Math.round((valor+1e-9)*100));
+  const taxa=BigInt(Math.round(aliquota*1_000_000_000));
+  return Number((centavos*taxa)/1_000_000_000n)/100;
+}
+/** Somatória exata de valores previamente definidos em centavos. */
+export function somarCentavos(valores:number[]):number {
+  return valores.reduce((s,v)=>s+Math.round((v+Math.sign(v)*1e-9)*100),0)/100;
+}
 export function conferirRegras(parametros:ParametrosFolha):void {
   for(const nome of ['inss','irrf'] as const){
     const faixas=parametros[nome]?.faixas;
@@ -37,16 +54,17 @@ export function conferirRegras(parametros:ParametrosFolha):void {
   if([ir.desconto_simplificado,ir.deducao_dependente,ir.reducao_integral_ate,ir.reducao_progressiva_ate,ir.reducao_constante,ir.reducao_fator].some(v=>!Number.isFinite(v)||v<0))throw new Error('Parâmetros IRRF inválidos.');
 }
 export function contribuicaoInss(base:number, regra:RegraInss):number {
-  const limitada=Math.min(Math.max(0,base),regra.teto);
-  let anterior=0,total=0;
+  const limitada=Math.min(Math.max(0,arredondar(base)),regra.teto);
+  let anterior=0;
+  const parcelas:number[]=[];
   for(const faixa of regra.faixas){
-    const parcela=Math.min(Math.max(limitada-anterior,0),faixa.ate-anterior);
-    // INSS progressivo: contribuição de cada faixa arredondada em centavos.
-    total+=arredondar(parcela*faixa.aliquota);
+    const parcela=arredondar(Math.min(Math.max(limitada-anterior,0),faixa.ate-anterior));
+    // Conforme MOS eSocial: truncamento a 2 casas EM CADA FAIXA progressiva.
+    parcelas.push(truncarAliquotaEmCentavos(parcela,faixa.aliquota));
     anterior=faixa.ate;
     if(limitada<=anterior)break;
   }
-  return arredondar(total);
+  return somarCentavos(parcelas);
 }
 export function impostoIrrf(rendimentos:number,inss:number,dependentes:number,regra:RegraIrrf){
   const deducoesLegais=inss + dependentes*regra.deducao_dependente;
@@ -89,10 +107,10 @@ export function calcularContracheque(entrada:{competencia:string;empresa:Memoria
   const eventosFinais:EventoCalculado[]=[salario,...extras,
    {codigo:'26',descricao:'CONTRIBUIÇÃO PREVIDENCIÁRIA',referencia:`${aliquotaFaixaInss.toFixed(2).replace('.',',')}%`,tipo:'DESCONTO',valor:inss,incide_inss:false,incide_fgts:false,incide_irrf:false,reduz_base:false},
    ...(irrf.valor>0?[{codigo:'27',descricao:'IMPOSTO DE RENDA RETIDO',referencia:`${irrf.aliquota.toFixed(1).replace('.',',')}%`,tipo:'DESCONTO' as const,valor:irrf.valor,incide_inss:false,incide_fgts:false,incide_irrf:false,reduz_base:false}]:[])];
-  const proventos=arredondar(eventosFinais.filter(e=>e.tipo==='PROVENTO').reduce((total,e)=>total+e.valor,0));
-  const descontos=arredondar(eventosFinais.filter(e=>e.tipo==='DESCONTO').reduce((total,e)=>total+e.valor,0));
+  const proventos=somarCentavos(eventosFinais.filter(e=>e.tipo==='PROVENTO').map(e=>e.valor));
+  const descontos=somarCentavos(eventosFinais.filter(e=>e.tipo==='DESCONTO').map(e=>e.valor));
   return {versao:'1',competencia:entrada.competencia,empresa:entrada.empresa,funcionario:entrada.funcionario,
-    eventos:eventosFinais,total_proventos:proventos,total_descontos:descontos,liquido:arredondar(proventos-descontos),
+    eventos:eventosFinais,total_proventos:proventos,total_descontos:descontos,liquido:somarCentavos([proventos,-descontos]),
     base_inss:arredondar(baseInss),base_fgts:arredondar(baseFgts),deposito_fgts:fgts,base_irrf:irrf.base,
     aliquota_irrf:irrf.aliquota,inss_desconto:inss,irrf_desconto:irrf.valor,dependentes_irrf:entrada.dependentes_irrf,regras:entrada.parametros.referencias};
 }

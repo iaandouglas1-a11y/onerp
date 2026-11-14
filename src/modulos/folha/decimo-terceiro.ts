@@ -1,4 +1,4 @@
-import { arredondar, conferirRegras, contribuicaoInss, impostoIrrf, type ParametrosFolha, type MemoriaContracheque, type EventoCalculado } from './calculos';
+import { arredondar, somarCentavos, conferirRegras, contribuicaoInss, impostoIrrf, type ParametrosFolha, type MemoriaContracheque, type EventoCalculado } from './calculos';
 export type TipoDecimoTerceiro = 'ADIANTAMENTO_13'|'SEGUNDA_PARCELA_13';
 export type Memoria13 = MemoriaContracheque & { tipo_13:TipoDecimoTerceiro; ano_13:number; avos_13:number; antecipacao_13:number; remuneracao_13:number };
 /** Conta mês com pelo menos 15 dias no vínculo; afastamentos e períodos especiais devem ser conferidos antes do processamento. */
@@ -34,10 +34,10 @@ export function calcularDecimoTerceiro(e:{tipo:TipoDecimoTerceiro;ano:2026;avos:
   ...(!primeira&&e.adiantamentoPago>0?[evento('132','ADIANTAMENTO DO 13º','DESCONTO',e.adiantamentoPago)]:[]),
   ...(!primeira&&inss>0?[evento('133','INSS SOBRE 13º','DESCONTO',inss)]:[]),
   ...(!primeira&&irrf.valor>0?[evento('134','IRRF SOBRE 13º','DESCONTO',irrf.valor)]:[])];
- const descontos=arredondar((primeira?0:e.adiantamentoPago)+inss+irrf.valor);
+ const descontos=somarCentavos([primeira?0:e.adiantamentoPago,inss,irrf.valor]);
  return {versao:'1',tipo_13:e.tipo,ano_13:e.ano,avos_13:e.avos,antecipacao_13:e.adiantamentoPago,remuneracao_13:remuneracao,
   competencia:`${e.ano}-${primeira?'11':'12'}`,empresa:e.empresa,funcionario:e.funcionario,dependentes_irrf:e.dependentes,
-  eventos,total_proventos:provento,total_descontos:descontos,liquido:arredondar(provento-descontos),
+  eventos,total_proventos:provento,total_descontos:descontos,liquido:somarCentavos([provento,-descontos]),
   base_inss:primeira?0:integral,base_fgts:baseFgts,deposito_fgts:arredondar(baseFgts*e.parametros.fgts.aliquota),
   base_irrf:irrf.base,aliquota_irrf:irrf.aliquota,inss_desconto:inss,irrf_desconto:irrf.valor,regras:e.parametros.referencias};
 }
