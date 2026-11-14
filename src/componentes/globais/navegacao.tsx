@@ -38,7 +38,7 @@ const modulos:ModuloMenu[]=[
     {titulo:'Visão geral',funcoes:[{titulo:'Painel da folha'}]},
     {titulo:'Cadastros',funcoes:[{titulo:'Empregados',rota:'/folha/empregados'},{titulo:'Eventos',rota:'/folha/eventos'}]},
     {titulo:'Movimentações',funcoes:[{titulo:'Lançamentos por competência',rota:'/folha/lancamentos'}]},
-    {titulo:'Processamento',funcoes:[{titulo:'Processamento e contracheques',rota:'/folha/contracheques'}]},
+    {titulo:'Processamento',funcoes:[{titulo:'Processamento e contracheques',rota:'/folha/contracheques'},{titulo:'13º salário',rota:'/folha/decimo-terceiro'}]},
     {titulo:'Gestão trabalhista',funcoes:[{titulo:'Férias'},{titulo:'Documentos trabalhistas'}]},
     {titulo:'Consultas',funcoes:[{titulo:'Histórico e relatórios'}]},
     {titulo:'Configurações',funcoes:[{titulo:'Parâmetros de cálculo',rota:'/folha/contracheques',destacar:false}]},

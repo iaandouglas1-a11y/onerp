@@ -1,5 +1,6 @@
 import { PDFDocument, StandardFonts, degrees, rgb, type PDFFont, type PDFPage } from 'pdf-lib';
 import type { MemoriaContracheque } from './calculos';
+import type { Memoria13 } from './decimo-terceiro';
 import { formatarDocumento } from '@/lib/utilitarios/formatacao';
 
 /** Reproduz somente o FORMATO do PDF de referência: A4 retrato, duas vias,
@@ -18,7 +19,8 @@ export async function gerarPdfContracheque(memoria:MemoriaContracheque):Promise<
  const dinheiro=(numero:number)=>new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(numero);
  const [ano,mes]=memoria.competencia.split('-');
  const mesPorExtenso=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][Number(mes)-1];
- const rotuloMes=`${mesPorExtenso.charAt(0).toUpperCase()+mesPorExtenso.slice(1)} ${ano}`;
+ const tipo13=(memoria as Memoria13).tipo_13;
+ const rotuloMes=tipo13?(tipo13==='ADIANTAMENTO_13'?`Adiantamento 13º / ${ano}`:`13º Salário / ${ano}`):`${mesPorExtenso.charAt(0).toUpperCase()+mesPorExtenso.slice(1)} ${ano}`;
  const desenharTexto=(texto:string,x:number,y:number,tamanho=7,fonte:PDFFont=regular,largura?:number,alinhamento:'direita'|'centro'|'esquerda'='esquerda')=>{
   const seguro=(texto||'').replace(/[\u2013\u2014]/g,'-').replace(/[\u2192]/g,'>').replace(/[^\x20-\x7E\u00A0-\u00FF]/g,'');
   const medido=fonte.widthOfTextAtSize(seguro,tamanho);
@@ -57,7 +59,7 @@ export async function gerarPdfContracheque(memoria:MemoriaContracheque):Promise<
    });
    desenharTexto('CNPJ',x+7,topo-40,6,negrito);
    desenharTexto(formatarDocumento(memoria.empresa.cnpj,'PJ'),x+54,topo-40,6.8,negrito);
-   desenharTexto(empregador?'Recibo de Pagamento de Salário':'Demonstrativo de Pagamento de Salário',x+274,topo-13,10.5,negrito,largura-277,'direita');
+   desenharTexto(tipo13?'Demonstrativo de 13º Salário':(empregador?'Recibo de Pagamento de Salário':'Demonstrativo de Pagamento de Salário'),x+274,topo-13,10.5,negrito,largura-277,'direita');
    desenharTexto('Referente ao Mês / Ano',x+340,topo-27,6,regular,largura-343,'direita');
    desenharTexto(rotuloMes,x+340,topo-41,8,negrito,largura-343,'direita');
    const idTopo=topo-51,idBase=idTopo-25;
