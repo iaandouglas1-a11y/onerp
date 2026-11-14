@@ -604,3 +604,29 @@ form[data-salvando="true"] :is(button[type="submit"],input[type="submit"])::afte
     grid-column:2;grid-row:1;
   }
 }
+
+/* Cabeçalho persistente dos módulos — independente do painel de apoio.
+   O deslocamento acompanha a altura da navegação principal em cada viewport. */
+.titulo-pagina{
+  position:sticky;
+  top:60px;
+  z-index:34;
+  padding:12px 14px;
+  margin:-12px -14px 16px;
+  background:rgba(245,247,250,.97);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-radius:10px;
+}
+@media(min-width:801px){
+  .on-workspace-main>.titulo-pagina{
+    top:74px;
+    z-index:45;
+  }
+}
+@media(max-width:800px){
+  .titulo-pagina{
+    margin:-8px -8px 14px;
+    padding:8px;
+  }
+}
