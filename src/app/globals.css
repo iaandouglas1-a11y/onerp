@@ -605,28 +605,37 @@ form[data-salvando="true"] :is(button[type="submit"],input[type="submit"])::afte
   }
 }
 
-/* Cabeçalho persistente dos módulos — independente do painel de apoio.
-   O deslocamento acompanha a altura da navegação principal em cada viewport. */
-.titulo-pagina{
-  position:sticky;
-  top:60px;
-  z-index:34;
-  padding:12px 14px;
-  margin:-12px -14px 16px;
-  background:rgba(245,247,250,.97);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-  border-radius:10px;
-}
-@media(min-width:801px){
+/* Layout estático: só a superfície de conteúdo possui rolagem vertical.
+   Cabeçalho e painel começam já na posição de fixação, sem deslocamento inicial. */
+@media (min-width:801px){
+  html,body{height:100%;overflow:hidden}
+  .app{height:100dvh;min-height:0;overflow:hidden}
+  #conteudo-principal{height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+  .on-topo-novo{position:relative;top:auto;flex:0 0 74px;min-height:74px}
+  #conteudo-principal>.conteudo{
+    flex:1 1 auto;min-height:0;max-height:none;
+    overflow-y:auto;overflow-x:hidden;overscroll-behavior-y:contain;
+    padding-top:0;
+    scrollbar-gutter:stable;
+  }
+  .on-workspace{min-height:100%;align-items:start}
   .on-workspace-main>.titulo-pagina{
-    top:74px;
-    z-index:45;
+    position:sticky;top:0;z-index:45;
+    margin:0 0 16px;padding:18px 14px 14px;
+    background:var(--gelo);border-radius:0 0 10px 10px;
   }
 }
-@media(max-width:800px){
+@media (min-width:1450px){
+  .on-painel-operacional{
+    top:0;max-height:100%;
+    padding-top:18px;padding-bottom:14px;
+    overflow-y:auto;
+  }
+}
+@media (max-width:800px){
   .titulo-pagina{
-    margin:-8px -8px 14px;
-    padding:8px;
+    position:sticky;top:60px;z-index:34;
+    margin:-8px -8px 14px;padding:8px;
+    background:var(--gelo);
   }
 }
